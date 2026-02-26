@@ -1,0 +1,220 @@
+End-to-End Execution Plan for an Open-Source Civil-Engineering BIM Viewer
+Key Decisions
+1. Starting point: Use the xeokit-bim-viewer repository as the primary codebase because it is a mature, browser-based 2D/3D BIM viewer that loads models from the file system and is already integrated into OpenProject BIM[1]. It offers features such as 3D/2D modes, x-ray, selection, tree views and localization[2]. The project has more than 500 stars and is licensed under AGPL-3.0[3]. A commercial license can be purchased to avoid copyleft obligations[4].
+2. Fallback: Keep BIMSurfer v3 as the backup option. BIMSurfer is MIT-licensed, includes partial support for 3D tiles and measurements, and is designed for high performance[5]. However, it is still in beta, has no official release, and only works with WebGL 2 (˜54 % browser support)[5].
+3. Licensing strategy: The project will remain open source. Since AGPL requires any hosted modifications to be released under the same license (copyleft), and MIT allows proprietary forks[6], we will distribute our viewer under the AGPL and additionally explore a dual-license/commercial option for organizations needing proprietary integration.
+4. Model format: Models will be stored using IFC and converted to glTF/GLB for efficient web delivery. The engine_web-ifc library can parse and write IFC at native speeds[7] and will be used in our conversion pipeline.
+5. XR strategy: Support Apple Vision Pro initially via a headset-friendly web UI; investigate immersive WebXR later. Safari on visionOS supports WebXR with natural input using gaze-and-pinch interactions, implemented through the transient-pointer input mode[8] and requiring adaptation of existing scenes[9]. Apple's WWDC session emphasises building immersive web experiences that leverage visionOS input capabilities[10].
+Next 10 Tasks
+1. Fork and review the selected repository (xeokit-bim-viewer). Verify build, run the demo, and document the current feature set.
+2. Develop a decision report comparing xeokit vs BIMSurfer vs build-from-scratch, using the decision matrix in section B.
+3. Set up a prototype pipeline: convert a sample IFC file to glTF using CLI tools recommended in xeokit docs[11] and host it in a local static server.
+4. Draft the system architecture diagram and identify module boundaries (viewer core, UI, annotation service, conversion service).
+5. Design the data schema for annotations/issues, including BCF compatibility.
+6. Write the initial PRD capturing user personas, core use cases, non-goals, and success metrics (section A).
+7. Create the CI/CD pipeline skeleton with linting, unit tests, and deployment to GitHub Pages.
+8. Implement basic measurement and annotation tools within the viewer core.
+9. Draft the Vision Pro friendly UI guidelines, including larger hit targets and simplified controls.
+10. Prepare community documentation, including CONTRIBUTING, code of conduct, and roadmap drafts.
+
+A) Product Definition (PRD)
+Target Users / Personas
+PersonaGoalsPain PointsCivil/Civic EngineerInspect and coordinate 3D models of bridges, roads, utilities; measure distances; annotate issues; plan maintenanceExisting viewers are generic and lack civil-oriented features (chain measurements, utilities filtering); tools may not work offline on tablets or headsets.Public Works Reviewer / InspectorReview as-built vs design, mark defects, export issues (BCF) for contractors, use on-site (field tablets or Vision Pro)Viewers are not optimised for field use; annotations don't sync to issue trackers; UI controls are too small for headsets.Project Manager / ConsultantNavigate models on desktop and mobile; filter by discipline (structures, MEP, utilities); review markups; monitor issue statusComplex software requires steep learning; license fees; no open, extendable solution.Stakeholder / CitizenUnderstand proposed infrastructure projects through a simplified viewer; provide feedbackHard to access heavy BIM viewers; need intuitive UI and ability to view on phones or headsets.Core Use Cases & User Journeys
+MVP (Weeks 0-6)
+* Model viewing and navigation: Users open a converted model, orbit/pan/zoom, switch between 3D and 2D floor/plan views[2], inspect object properties and search via tree. Journey: import IFC ? convert to glTF ? open in viewer ? navigate.
+* Measurements: Linear and angular measurements; selection of objects; ability to measure chain distances along roads/bridges. Acceptable tolerance and unit settings.
+* Annotations & issue export: Users create annotations pinned to objects or coordinates; export issues to BCF or JSON; import existing issues. Initial implementation stores annotations locally.
+* Civil-specific filtering: Layer/discipline filters (e.g., surfaces, utilities, structures) to isolate parts of the model; X-ray/hide functions[2].
+V1 (Weeks 7-10)
+* Stationing/chain measurements: Provide stationing or chainage tools for linear infrastructure (e.g., alignments). When geometry doesn't support a parametric alignment, approximate chainage along polylines.
+* Utilities and underground context: Display metadata (pipe diameters, material) from IFC property sets; implement "what's below/behind" toggles to show hidden infrastructure.
+* Markup collaboration: Allow saving markups to remote storage (GitHub or custom service) and sharing links; support import/export of BCF viewpoints.
+* Internationalisation/accessibility: Provide UI in multiple languages, high-contrast mode, keyboard navigation.
+V2 (Weeks 11-14 and beyond)
+* Real-time collaboration: Multi-user annotation sessions with WebRTC or WebSocket back-end. Role-based permissions (viewer vs reviewer).
+* WebXR immersive mode: Provide optional fully immersive viewing using WebXR on Vision Pro. Support natural input (gaze + pinch) based on transient-pointer input mode[8].
+* Mobile offline sync: Cache models and markups for offline viewing on tablets; sync when online.
+Non-Goals
+* Authoring or editing models (i.e., no direct geometry creation or modification).
+* Replacing commercial BIM platforms; the focus is on viewing/reviewing models.
+* Support for proprietary file formats (e.g., DWG) outside of the IFC-glTF conversion pipeline.
+* Real-time sensor data streaming; this may be added later.
+Success Metrics
+* Performance: Model load time < 5 s for typical civil models (<100 MB), average frame rate > 30 fps on mid-range laptops; memory footprint below 500 MB. For Vision Pro, maintain comfortable frame rate and avoid nausea.
+* Adoption: >100 GitHub stars and at least two external contributions within three months; adoption by one civic engineering organisation by V1.
+* Contribution velocity: Merged PRs per month; number of issues closed vs opened.
+* User outcomes: Engineers report faster review cycles, fewer mis-measurements, and improved clarity on underground utilities.
+
+B) Repo Selection Decision
+Decision Matrix
+Criterionxeokit-bim-viewer (AGPL)BIMSurfer v3 (MIT)Build-from-Toolkit (e.g., engine_web-ifc + Three.js)LicenseAGPL-3.0 (copyleft); modifications and hosted services must be open-sourced or require commercial license[4]MIT (permissive)[5]Depends on choice of libraries (MIT for Three.js, MPL for engine_web-ifc[12])Maturity / AdoptionMature; integrated into OpenProject BIM 10.4+[13]; >500 stars and >400 forks[3]Beta; no official release; WebGL2-only; ~416 stars[5][14]Requires building viewer from scratch; high flexibility but long time to MVPFeatures3D/2D views, load multiple models, X-ray/hide, section planes, tree views, BCF viewpoint support[2]Partial support for 3D tiles, measurements, up to 6 section planes[5]Only basic parsing; all viewer features must be built; can be tailored to specific needsPerformanceOptimised for large models; uses double-precision geometry[15]High performance due to custom WebGL2 pipeline[5]Dependent on developer implementation and chosen rendering engineConversion PipelineRequires converting IFC to glTF/XKT; documented in README[11]Typically paired with BIMServer; supports glTF via IfcOpenShell[16]Developer must design pipeline; can leverage engine_web-ifc[7]ExtensibilityBuilt on xeokit SDK; provides programming API for custom functions[2]Codebase still evolving; may require deep familiarity with WebGL2; limited docsMaximum flexibility; but high development costTime-to-MVPFastest: just fork, convert sample models and add features; ready-to-use structure[17]Medium: needs stabilization and missing features; risk due to beta stateSlowest: months of development to reach parityRecommendation
+* Primary path: xeokit-bim-viewer. It provides a solid foundation, well-documented features, and an active community. The AGPL license aligns with the goal of keeping the project open source, and a commercial license is available for organizations requiring proprietary usage[4].
+* Fallback path: BIMSurfer v3. Should xeokit prove unsuitable (e.g., licensing conflicts or performance issues), BIMSurfer offers MIT freedom and high performance but requires addressing its beta state and WebGL2 limitation[5].
+* Toolkit approach: Use engine_web-ifc and build a custom viewer if both repositories fail to meet requirements or if a specialized architecture is desired. The library can read/write IFC at native speeds[7] and could be combined with Three.js or Babylon.js for rendering.
+License Implications
+* AGPL-3.0: If users modify the viewer and make it available over a network (e.g., SaaS), they must provide their source code under the AGPL[6]. This encourages contributions but deters proprietary use. Companies can purchase a commercial license from xeokit maintainers[4].
+* MIT: Allows use, modification and distribution in proprietary projects without obligation to share changes[6]. This may encourage broader adoption but reduces guarantee of community contributions. Using BIMSurfer (MIT) or building from scratch with permissive libraries may attract organizations wanting closed extensions.
+
+C) System Architecture
+High-Level Diagram (Textual)
+User (Browser or Vision Pro) --> Web Application (Viewer UI + Viewer Core)
+                                  ¦
+                                  +- Model Loader & Cache
+                                  ¦    +- IFC Parser (server or client using engine_web-ifc)
+                                  ¦    +- Converter (IFC ? glTF/XKT)
+                                  ¦
+                                  +- Annotation & Issue Service
+                                  ¦    +- Local storage (MVP)
+                                  ¦    +- Remote storage API (GitHub/BCF server) (V1)
+                                  ¦
+                                  +- Authentication & Authorization (optional, for remote storage)
+                                  +- REST/GraphQL API (optional, if using server-assisted pipeline)
+
+Hosting options:
+1. **Static hosting:** All assets and viewer code served via GitHub Pages or S3; model conversion done offline.  Annotation data stored in local storage or commits via GitHub PRs.
+2. **Server-assisted:** Backend service handles IFC uploads, conversion, and annotation storage; may use Node.js/Express or serverless functions.
+Modules
+1. Model Ingestion & Conversion
+2. IFC parser / converter: Use CLI or server-side pipeline to convert IFC to glTF/XKT. For client-side experiments, use engine_web-ifc to parse IFC directly in the browser[7]. For large models, server conversion avoids heavy WASM processing on clients.
+3. Model cache: Store converted models in a data/ directory (static hosting) or object storage (S3). Implement caching headers and progressive loading (stream glTF chunks or use 3D tiles for large models). Provide fallback to progressive JPEG previews while loading.
+4. Viewer Core
+5. Based on xeokit viewer. Provide 3D and 2D modes, camera controls, object selection, tree view filtering, section planes, measurement tool, and property inspector[2].
+6. Expose a JavaScript API for extensions (e.g., new tools, UI components).
+7. UI Layer
+8. Responsive layout for desktop, tablet, mobile and Vision Pro. Use accessible components with keyboard navigation and ARIA labels. Provide large buttons and simplified HUD for headset mode.
+9. Provide customization of themes and localization.
+10. Annotations/Issues Module
+11. Data model: Each annotation stores type (text, measurement, markup), anchor (object ID or world coordinates), user, timestamp, comment, and optional severity. Issues follow the BCF schema: viewpoint (camera position, orientation, selected objects), markup, and optional attachments. JSON schema will be defined.
+12. Local storage: Use IndexedDB or browser storage for MVP. Provide export/import as JSON or BCF zip.
+13. Remote service: Optional Node.js API with REST endpoints for saving, updating, and retrieving annotations; support authentication (OAuth) and rate limiting.
+14. Auth (Optional)
+15. For remote collaboration, integrate OAuth (GitHub, Google) or simple token-based auth. For public agencies, support single sign-on (OpenID Connect) as a later extension.
+16. Storage (Optional)
+17. Use AWS S3/CloudFront or GitHub Pages for static hosting. For server-assisted mode, use object storage for models and a document database (MongoDB) for annotations.
+API Boundaries
+* Client ? Static: No API; all interactions occur within the browser. Model conversion is manual; annotations are stored locally or as GitHub pull requests.
+* Client ? Server: When remote storage is used, define REST/GraphQL endpoints for uploading IFC files, requesting conversions, retrieving converted assets, and CRUD operations for annotations/issues. Use JSON Web Tokens for authentication and role-based access.
+
+D) Model Ingestion / Pipeline
+Pipeline 1: Static Hosting
+1. Conversion: Use open-source CLI (xeokit-XKT or ifcConvert from IfcOpenShell) to convert IFC to glTF or XKT (binary glTF). The xeokit README recommends converting IFC to binary glTF (GLB) via cxConverter[18].
+2. Project folder: Place each converted model into a subfolder within data/. Each folder contains model.glb (geometry), metadata.json (properties), and viewerconfig.json (optional settings).
+3. Commit & deploy: Use GitHub Pages or S3 to host the viewer and models. Provide a unique projectId query parameter for each project[19].
+4. Access: Users open the viewer via URL with ?projectId=<id>; the viewer loads the GLB and metadata and caches them. Browser caches may be configured with Cache-Control headers.
+5. Updates: To update models or annotate, users commit changes to the repository or upload new GLBs. For annotations, JSON/BCF files can be added to the annotations folder.
+Pipeline 2: Server-Assisted
+1. Upload Service: Provide a simple web form/API where users upload IFC files. The server stores the raw IFC in object storage.
+2. Conversion: The server triggers a conversion job (Node.js service invoking ifcConvert or a containerized service). The output is glTF/GLB and metadata files.
+3. Storage and CDN: Converted models are stored in object storage and optionally served via CDN. The server returns a projectId and URLs to assets.
+4. Viewer Access: The client requests the project metadata from the server and loads the glTF via HTTP. For large models, implement streaming or progressive loading (e.g., glTF with Draco compression, 3D tiles for partial loading). The 3D tiles approach is supported in BIMSurfer v3 and may be adopted in a custom pipeline[5].
+5. Caching Strategy: Use HTTP caching with ETag and Cache-Control: max-age to store models in the browser. Provide a version number to force invalidation.
+6. Handling Huge Models: Break large IFC models into spatial subdivisions and convert them separately. Use 3D Tiles or custom Level-Of-Detail (LOD) management to load tiles on demand. Provide placeholder geometry while streaming the full detail.
+7. Sample Datasets & Benchmarks: Curate sample civil models (bridge, roadway, water network) in IFC format. Provide conversion scripts and measure load time, memory usage, and frame rate across devices. Publish benchmarks in docs so contributors can reproduce results.
+
+E) Feature Backlog (Engineering-Ready)
+Each item includes a description, priority (MVP/V1/V2), acceptance criteria (AC), and test approach.
+Basic Viewer Core
+FeaturePriorityDescriptionAcceptance CriteriaTest ApproachOrbit/Pan/ZoomMVPProvide intuitive camera controls: orbit around selected pivot, pan view, zoom via scroll/pinch.User can rotate model, pan, and zoom smoothly with mouse/touch; no jitter; respects bounding volumes.Automated UI tests with Playwright/Cypress to verify camera movement; performance test to ensure 30 fps.Object Selection & PropertiesMVPClick/tap objects to show properties from metadata.Selecting an object highlights it and displays its IFC properties in a panel; deselecting hides the panel.Unit tests for property parsing; end-to-end tests selecting multiple objects; accessibility test for keyboard selection.Search & Tree ViewMVPFilter objects by name or IFC type; show hierarchical structure by storey/layers.Search returns matching objects; tree toggles isolate/hide objects; selecting in the tree selects object in scene.Integration tests to verify search results; UI snapshot tests for tree interactions.Section PlanesMVPAdd up to 6 clipping planes to cut the model.Users can add, move, and remove section planes; sections update in real time; plane positions saved in viewer state.Unit tests verifying plane matrix calculations; UI tests adding/removing planes; performance tests.Measurement ToolMVPDistance measurement between two points; show result in meters/feet.Users place two points; measurement line appears; value shown; measurement persists in session.Integration tests for measurement accuracy; screenshot tests to verify label placement; numeric tolerance tests.2D/Plan NavigationV1Switch to plan view; navigate floors with orthographic view; 2D overlays.Users toggle between 3D and plan; plan shows storey outlines; clicking objects focuses them in 3D.End-to-end tests toggling views; regression tests of plan projection; user feedback sessions.Civil/Civic Features
+FeaturePriorityDescriptionAcceptance CriteriaTest ApproachChain/Stationing MeasurementV1Measure cumulative distance along a path (roads, bridges). If alignment is not defined, approximate along connected segments.User selects a path; UI displays station numbers and cumulative distances; exports results as CSV/JSON.Unit tests for polyline length calculation; integration tests using civil sample models.Utility & Layer FilteringMVPFilter by discipline (e.g., structural, mechanical, electrical, plumbing, utilities). Provide "what's below/behind" toggles.Users select discipline filters; viewer shows only selected layers; "below" mode makes ground/above layers semi-transparent.UI tests toggling filters; property parsing tests to ensure correct classification.Annotations / MarkupsMVPAdd text notes, arrows or shapes anchored to objects/world coordinates; categorize by severity/type.Users create, edit, and delete annotations; anchor persists relative to object; annotation list visible.Unit tests for annotation data structure; integration tests verifying anchor persistence; cross-browser tests.Issue Export/ImportMVPExport annotations as BCF or JSON; import existing issues into viewer; maintain viewpoint.Exported file opens in BCF viewer; imported file shows correct viewpoints; statuses preserved.Unit tests for BCF serialization; import/export round-trip tests; validation against BCF schema.Markup CollaborationV1Sync annotations to remote storage; manage update conflicts; notifications.Two users see updates in real time; merge conflicts resolved; offline edits sync once online.Simulated multi-user end-to-end tests; conflict resolution unit tests.Accessibility & Internationalisation
+| Feature | Priority | Acceptance Criteria | Test Approach | |---|---|---| | High-contrast mode | MVP | Users can toggle to high-contrast theme for better readability; meet WCAG 2.1 AA contrast ratios. | Use axe or Lighthouse audits; user testing with accessibility tools. | | Keyboard Navigation | MVP | All UI elements reachable by keyboard; focus indicators visible; ARIA labels included. | Automated accessibility tests (e.g., Axe); manual keyboard navigation review. | | Localization | V1 | Strings externalized; support multiple languages (e.g., EN, VI, FR). | Translation files loaded; language switch persists; fallbacks in place. | Unit tests for translation keys; snapshot tests for different languages. |
+Collaboration & Expansion
+FeaturePriorityDescriptionReal-time CollaborationV2Multi-user sessions with WebRTC/WebSocket; roles (viewer, editor); conflict management.Plugin SystemV2Allow external modules to extend viewer (e.g., IoT sensor overlay). Provide API and hook system.Mobile Offline SupportV2Cache models and annotations for offline use; background sync; storage management.
+F) XR/AR-Glasses Track (Vision Pro)
+Track 1 (MVP): Headset-Friendly Web Viewer
+* UI scaling & simplified controls: Provide large UI buttons (> 10 mm target size), spacing between elements, and minimal modal dialogs. Use gaze-based focus and pinch selection as primary input. Avoid nested menus; provide radial or contextual menus.
+* Input assumptions: According to WebKit's natural input model for visionOS, the user looks at a target and pinches to interact[20]. The default WebXR input is a transient pointer that exists only during the pinch, and events such as selectstart and selectend are fired on the XR session[21]. Design UI to respond to these events.
+* Fallback behaviour: If WebXR is unavailable or disabled (visionOS requires enabling the feature in Safari's settings[22]), the viewer should operate as a 2D web app within the headset. Provide an overlay message guiding users to enable WebXR.
+* Performance considerations: Aim for stable frame rates > 60 fps to avoid discomfort; reduce draw calls; limit transparent overlays. Test on Vision Pro Simulator and actual device.
+Track 2 (Stretch): Immersive WebXR Mode
+* Feasibility Analysis: Evaluate whether xeokit's rendering pipeline can work inside WebXR sessions. Investigate integration with Three.js or Babylon.js to create an XR layer. Confirm that the engine supports offscreen rendering to XRWebGLLayer.
+* Minimal Prototype Plan:
+* Enable WebXR flags in Safari and create a basic XR session that renders a simple glTF model using Three.js. Use the transient-pointer input mode to handle gaze-and-pinch[21].
+* Integrate xeokit model loading into this XR session; ensure camera controls map to natural input (e.g., teleport or navigation gestures). Use pointer raycasting for object selection.
+* Evaluate user comfort and interactions; adjust UI scale and event mapping.
+* Risks & Mitigations:
+* Experimental support: WebXR on visionOS is behind a feature flag and may change; maintain fallbacks and monitor WebKit releases.
+* Performance constraints: Large models may not render smoothly; consider converting models to 3D tiles or using progressive LOD. Provide a model selection UI so users avoid loading huge models in immersive mode.
+* User comfort: Immersive experiences can cause fatigue or nausea; provide easy exit, teleportation, and avoid abrupt movement.
+* Alternative: If direct integration is impractical, wrap the viewer in a native visionOS app that uses SceneKit/RealityKit to display converted models; call out to the web viewer via WKWebView for 2D/desktop use. This increases complexity but may provide better performance and native UI.
+
+G) Security / Privacy / Compliance
+1. Threat Model: Attackers may attempt to inject malicious models, cross-site script in metadata, or exfiltrate annotations. Mitigate by sanitizing metadata, enabling Content Security Policy (CSP), and using trusted conversion tools. Validate annotation content on the server.
+2. Network Security: Use HTTPS for all endpoints; implement rate limiting to prevent denial-of-service. If remote storage is used, require authentication and authorization; implement role-based access controls (viewer, commenter, admin).
+3. Data Privacy: Avoid storing personally identifiable information (PII) within model metadata or annotations. Provide clear privacy notice. For public agencies, ensure compliance with local data protection laws.
+4. Supply Chain Security: Regularly audit third-party dependencies; pin versions in package.json. Set up automated vulnerability scanning (e.g., GitHub Dependabot) and respond to alerts. Use reproducible builds and maintain checksums for model files.
+5. Integrity: Sign releases and provide checksums. When hosting static files, configure S3 or GitHub Pages to prevent unauthorized uploads.
+6. Public-Sector Friendliness: Provide documentation on how to self-host to avoid foreign data residency issues; support offline deployments behind firewalls.
+
+H) Testing + Quality Plan
+1. Unit Tests: Use Jest for pure JavaScript/TypeScript logic (measurement calculations, parsing, annotation storage). Aim for = 80 % coverage.
+2. Integration Tests: Use Playwright/Cypress to simulate user interactions (loading models, selecting objects, measuring distances, adding annotations). Include tests for Vision Pro simulation environment.
+3. End-to-End Tests: Deploy the viewer to a test server and run automated scripts to load sample models and verify performance thresholds (load time, FPS). Use Puppeteer with performance metrics.
+4. Performance Testing: Use Chrome/Safari performance tools to profile memory usage and FPS on sample models. Document results; set budgets in CI to fail builds if budgets are exceeded.
+5. Cross-Browser Matrix: Test on Chrome, Firefox, Safari (macOS/iOS), Edge and visionOS Safari. For Vision Pro, test both 2D web and immersive WebXR (if implemented).
+6. Regression Strategy: Maintain a suite of sample IFC models and expected outputs (converted glTF, metadata). Use golden images to detect rendering regressions. Use continuous integration to run regression tests on each PR.
+7. Definition of Done: Feature considered done when: all ACs pass, tests written and passing, documentation updated, code reviewed and merged, and no critical performance regressions.
+
+I) CI/CD + Release Engineering
+1. Repository Structure: Root contains src/ for viewer code, data/ for sample models, tests/, docs/, and scripts/ for conversion tools. Use TypeScript and commit generated build artifacts.
+2. GitHub Actions Pipelines:
+3. Lint & Format: Run ESLint and Prettier on PRs. Fail on violations.
+4. Unit & Integration Tests: Run Jest and Playwright; collect coverage reports.
+5. Build & Deploy: Build production version; convert sample models; deploy to GitHub Pages (for static hosting). Use actions/upload-artifact to publish built packages.
+6. Security Scans: Use Dependabot alerts and npm audit to identify vulnerabilities; fail builds on high-severity issues.
+7. Versioning Strategy: Use semantic versioning (MAJOR.MINOR.PATCH). Increment MAJOR when breaking changes; MINOR when adding features; PATCH for bug fixes.
+8. Release Notes & Changelog: Maintain a CHANGELOG.md. Use an automated tool (e.g., standard-version) to generate release notes from conventional commit messages. Tag releases in Git.
+9. Demo Site Deployment: Use GitHub Pages or Netlify for public demos. Provide sample models and instructions. Use preview deployments for PRs to allow review of feature branches.
+10. Continuous Delivery: For server-assisted mode, use Docker images and deploy to AWS ECS or a serverless platform. Use environment variables for configuration and secrets.
+
+J) Documentation + Community
+1. CONTRIBUTING.md: Outline how to set up the dev environment, coding standards, how to run tests, and how to submit PRs. Encourage issues and feature requests. Provide commit message conventions.
+2. CODE_OF_CONDUCT.md: Adopt a standard code of conduct (e.g., Contributor Covenant). Set expectations for respectful collaboration.
+3. SECURITY.md: Provide guidelines for reporting security vulnerabilities privately. Outline supported versions and patch procedures.
+4. Getting Started Docs: Provide a quick start guide: clone repo, install dependencies, convert sample IFC, run viewer, open in browser. Include command examples from the README of xeokit to convert and serve models[23]. Provide troubleshooting tips.
+5. Architecture Doc: Document the system design, modules, data flow, and extension points. Include diagrams and sequence charts. Explain how to add new tools or integrate server storage.
+6. Feature Guides: For each major feature (measurement, annotation, chainage), write guides with screenshots and sample workflows. Include recommended civil engineering use cases.
+7. Roadmap Page: Outline planned milestones (MVP, V1, V2). Use a GitHub project board to track tasks. Invite community feedback and proposals.
+8. Issue & PR Templates: Provide templates for bug reports, feature requests, and pull requests. Encourage clear descriptions, reproduction steps, and expected behaviour.
+9. Governance: Establish maintainers, decision-making process, and guidelines for adding new maintainers. Consider a steering committee with representation from civil engineers and developers.
+10. Community Engagement: Create discussions on GitHub and OSArch forum; share announcements via social media and OSArch newsletter. Encourage contributions from civil engineering students and professionals.
+
+K) Roadmap & Timeline
+Week 0-2
+* Repo Selection & Spike: Fork xeokit-bim-viewer; set up build and run a hello-world model. Evaluate BIMSurfer as fallback. Document pros/cons.
+* Sample Data Acquisition: Collect IFC models representing roads, bridges, and utilities. Convert them to glTF/XKT using the recommended CLI[11]. Measure initial load/performance.
+* PRD & Architecture Draft: Finalize PRD (section A) and system architecture (section C). Define modules and data schema. Publish for community review.
+Week 3-6
+* MVP Viewer Implementation: Implement basic viewer features: orbit/pan/zoom, selection, property panel, search/tree view, section planes, measurement tool. Use xeokit API.
+* Annotations & Export: Implement text annotations and measurement storage. Add export/import to JSON/BCF. Provide UI for adding/deleting annotations.
+* Conversion Pipeline Scripts: Write scripts for IFC ? glTF conversion and add them to scripts/. Document usage.
+* CI/CD Skeleton: Set up lint/test/build workflows in GitHub Actions. Deploy static demo to GitHub Pages.
+* Documentation Draft: Write getting started guide and initial contributing guidelines.
+Week 7-10
+* Civil Features: Add chain/stationing measurement; implement utility layer filtering and "below/behind" toggles. Implement severity categories and annotation types.
+* Performance Hardening: Profile the viewer; implement caching and LOD. Optimize for large civil models.
+* Accessibility & Internationalisation: Add high-contrast mode, keyboard navigation, language support.
+* Documentation Expansion: Write guides for civil features; create architecture diagrams; update PRD based on feedback.
+Week 11-14
+* Vision Pro Friendly Mode: Adapt UI for headset use; enlarge controls; implement gaze-and-pinch input handling; test on Vision Pro simulator and hardware. Provide fallback instructions if WebXR disabled.
+* WebXR Prototype (Optional): Build a proof-of-concept immersive mode using WebXR. Use Three.js or a bridging library to render models inside a WebXR session. Map transient-pointer input to object selection[21].
+* Remote Annotations (Optional): Build a simple Node.js service for storing annotations; integrate login via GitHub OAuth. Deploy to a free tier for testing.
+* Release Candidate & Community Outreach: Cut an RC version; invite testers from OSArch and civil engineering communities. Collect feedback and bug reports; plan next iteration.
+* Risk Register & Kill Switch: Monitor WebXR changes in WebKit; if immersive mode proves unstable or unperformant, revert to 2D headset mode. If AGPL adoption becomes a blocker, revisit dual-license approach.
+
+Conclusion
+This execution plan provides a comprehensive roadmap to build a production-grade, open-source BIM/IFC viewer tailored for civil and civic engineering. By starting with the mature xeokit-bim-viewer (AGPL) and planning for a fallback to BIMSurfer (MIT), we balance stability and licensing flexibility. The plan covers product definition, architectural design, model ingestion pipelines, feature backlog, XR strategy, security, testing, CI/CD, documentation, and a realistic timeline. Following this blueprint should lead to a robust, extendable viewer that empowers engineers, inspectors, and stakeholders to understand and review infrastructure projects efficiently-both on traditional browsers and on next-generation devices like the Apple Vision Pro.
+
+[1] [2] [3] [4] [11] [13] [15] [17] [18] [19] [23] GitHub - xeokit/xeokit-bim-viewer: Built with xeokit SDK. IFC, BIM and Point Cloud 3D Viewer as a package. Enables AEC & GIS applications with double precision global coordinates.
+https://github.com/xeokit/xeokit-bim-viewer
+[5] [14] [16] GitHub - opensourceBIM/BIMsurfer: The latest version of the BIM Surfer WebGL viewer for IFC
+https://github.com/opensourceBIM/BIMsurfer
+[6] What are Apache, GPL and AGPL licenses and why OpenObserve moved from Apache to AGPL
+https://openobserve.ai/blog/what-are-apache-gpl-and-agpl-licenses-and-why-openobserve-moved-from-apache-to-agpl/
+[7] [12] GitHub - ThatOpen/engine_web-ifc: Reading and writing IFC files with Javascript, at native speeds.
+https://github.com/ThatOpen/engine_web-ifc
+[8] [9] [20] [21]  Introducing Natural Input for WebXR in Apple Vision Pro | WebKit
+https://webkit.org/blog/15162/introducing-natural-input-for-webxr-in-apple-vision-pro/
+[10] Build immersive web experiences with WebXR - WWDC24 - Videos - Apple Developer
+https://developer.apple.com/videos/play/wwdc2024/10066/
+[22] Apple Vision Pro natural input support comes to WebXR with Safari - 9to5Mac
+https://9to5mac.com/2024/03/21/vision-webxr-input/
