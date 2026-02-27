@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Open-source BIM/IFC viewer for civil and civic engineering" />
+    <title>Civil BIM Viewer</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Viewer toolbar -->
+      <header id="toolbar" role="banner" aria-label="Viewer toolbar">
+        <button id="btn-3d" aria-label="Switch to 3D view" aria-pressed="true">3D</button>
+        <button id="btn-2d" aria-label="Switch to 2D plan view" aria-pressed="false">2D</button>
+        <button id="btn-measure" aria-label="Activate measurement tool">Measure</button>
+        <button id="btn-annotate" aria-label="Add annotation">Annotate</button>
+        <button id="btn-section" aria-label="Add section plane">Section</button>
+        <button id="btn-xray" aria-label="Toggle X-ray mode">X-Ray</button>
+        <button id="btn-export-bcf" aria-label="Export issues as BCF">Export BCF</button>
+      </header>
+
+      <!-- Left panel: model tree -->
+      <aside id="panel-tree" role="complementary" aria-label="Model tree">
+        <input
+          id="search-input"
+          type="search"
+          placeholder="Search objects…"
+          aria-label="Search model objects"
+        />
+        <nav id="tree-view" aria-label="Model hierarchy tree"></nav>
+      </aside>
+
+      <!-- Main canvas -->
+      <main id="viewer-canvas" role="main" aria-label="3D model viewer"></main>
+
+      <!-- Right panel: properties + annotations -->
+      <aside id="panel-properties" role="complementary" aria-label="Object properties">
+        <section id="properties-panel" aria-live="polite" aria-label="Selected object properties">
+          <p>Select an object to view properties.</p>
+        </section>
+        <section id="annotations-panel" aria-label="Annotations list"></section>
+      </aside>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,162 @@
+/* =========================================================
+   Civil BIM Viewer — Main Stylesheet
+   Responsive layout: desktop, tablet, mobile, and Vision Pro
+   headset-mode class applied by UIController for XR devices.
+   ========================================================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-bg: #1a1a2e;
+  --color-surface: #16213e;
+  --color-border: #0f3460;
+  --color-accent: #e94560;
+  --color-text: #eaeaea;
+  --color-text-muted: #9a9ab0;
+  --toolbar-height: 48px;
+  --panel-width: 260px;
+  --btn-min-size: 44px;       /* WCAG 2.5.5: 44×44 px minimum target */
+  --btn-headset-size: 64px;   /* Vision Pro: >10 mm ≈ 60+ px at arm's length */
+}
+
+/* High-contrast mode (Task 9, E2) */
+@media (prefers-contrast: more) {
+  :root {
+    --color-bg: #000;
+    --color-surface: #111;
+    --color-border: #fff;
+    --color-accent: #ffff00;
+    --color-text: #fff;
+  }
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ---- Layout ---- */
+#app {
+  display: grid;
+  grid-template-rows: var(--toolbar-height) 1fr;
+  grid-template-columns: var(--panel-width) 1fr var(--panel-width);
+  height: 100dvh;
+}
+
+#toolbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+#panel-tree,
+#panel-properties {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  overflow-y: auto;
+  padding: 12px;
+}
+
+#panel-tree { border-right: 1px solid var(--color-border); }
+#panel-properties { border-left: 1px solid var(--color-border); }
+
+#viewer-canvas {
+  background: #0a0a1a;
+  position: relative;
+}
+
+/* ---- Toolbar buttons ---- */
+button {
+  min-width: var(--btn-min-size);
+  min-height: var(--btn-min-size);
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover,
+button:focus-visible {
+  background: var(--color-border);
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+button[aria-pressed="true"] {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* ---- Search input ---- */
+#search-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+#search-input:focus {
+  outline: 2px solid var(--color-accent);
+}
+
+/* ---- Headset / Vision Pro mode ---- */
+/* Applied by UIController._detectHeadsetMode() */
+body.headset-mode {
+  --btn-min-size: var(--btn-headset-size);
+  font-size: 18px;
+}
+
+body.headset-mode #panel-tree,
+body.headset-mode #panel-properties {
+  display: none; /* Simplified HUD; panels replaced by contextual overlays */
+}
+
+body.headset-mode #app {
+  grid-template-columns: 1fr;
+}
+
+/* ---- Responsive: tablet ---- */
+@media (max-width: 900px) {
+  #app {
+    grid-template-columns: 200px 1fr;
+  }
+  #panel-properties {
+    display: none;
+  }
+}
+
+/* ---- Responsive: mobile ---- */
+@media (max-width: 600px) {
+  #app {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--toolbar-height) 1fr auto;
+  }
+  #panel-tree {
+    display: none;
+  }
+  #toolbar {
+    overflow-x: auto;
+  }
+}
