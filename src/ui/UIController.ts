@@ -338,13 +338,24 @@ export class UIController {
           break;
         case "m":
         case "M":
-          // M: toggle measurement (placeholder — Task 2.1)
+          // M: toggle measurement
           document.getElementById("btn-measure")?.click();
           break;
         case "a":
         case "A":
-          // A: toggle annotation (placeholder — Task 2.3)
+          // A: toggle annotation
           document.getElementById("btn-annotate")?.click();
+          break;
+        case "h":
+        case "H":
+          // H: toggle high-contrast
+          document.getElementById("btn-high-contrast")?.click();
+          break;
+        case "f":
+        case "F":
+          // F: focus filter panel search
+          e.preventDefault();
+          document.getElementById("search-input")?.focus();
           break;
         case "z":
         case "Z":
@@ -359,7 +370,51 @@ export class UIController {
           // X: toggle X-ray
           document.getElementById("btn-xray")?.click();
           break;
+        case "?":
+          // ?: show keyboard shortcuts help
+          this._showKeyboardHelp();
+          break;
       }
+    });
+  }
+
+  /** Show keyboard shortcuts help overlay */
+  private _showKeyboardHelp(): void {
+    // Remove existing if open
+    const existing = document.getElementById("keyboard-help-overlay");
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    const overlay = document.createElement("div");
+    overlay.id = "keyboard-help-overlay";
+    overlay.className = "keyboard-help-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-label", "Keyboard shortcuts");
+    overlay.innerHTML = `
+      <div class="keyboard-help">
+        <h3>Keyboard Shortcuts</h3>
+        <dl>
+          <dt>Tab / Shift+Tab</dt><dd>Cycle object selection</dd>
+          <dt>Escape</dt><dd>Deselect / cancel</dd>
+          <dt>M</dt><dd>Toggle measurement</dd>
+          <dt>A</dt><dd>Toggle annotation mode</dd>
+          <dt>H</dt><dd>Toggle high-contrast</dd>
+          <dt>F</dt><dd>Focus search</dd>
+          <dt>X</dt><dd>Toggle X-ray</dd>
+          <dt>Ctrl+Z</dt><dd>Undo last path point</dd>
+          <dt>?</dt><dd>Toggle this help</dd>
+        </dl>
+        <button id="keyboard-help-close" aria-label="Close help">Close</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.getElementById("keyboard-help-close")?.addEventListener("click", () => {
+      overlay.remove();
+    });
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) overlay.remove();
     });
   }
 
