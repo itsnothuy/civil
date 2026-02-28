@@ -7,26 +7,25 @@
  */
 
 import type { ViewerCore } from "../viewer/ViewerCore";
-import type { ModelLoader } from "../loader/ModelLoader";
 import type { AnnotationService } from "../annotations/AnnotationService";
 
 export class UIController {
   private viewer: ViewerCore;
-  // Stub: will be used for model reload/switch UI (Task 1)
-  private _loader: ModelLoader;
   private annotations: AnnotationService;
 
   private _activeSectionPlanes: string[] = [];
+  private _sectionListCleanup: (() => void) | null = null;
 
-  constructor(viewer: ViewerCore, loader: ModelLoader, annotations: AnnotationService) {
+  constructor(viewer: ViewerCore, annotations: AnnotationService) {
     this.viewer = viewer;
-    this._loader = loader;
     this.annotations = annotations;
   }
 
+  /** Initialize all UI bindings */
   init(): void {
     this._bindToolbar();
     this._bindSearch();
+    this._bindKeyboard();
     this._detectHeadsetMode();
     console.info("[UIController] Initialized.");
   }
@@ -53,8 +52,10 @@ export class UIController {
 
     this._on("btn-section", () => {
       const planeId = this.viewer.addSectionPlane();
-      this._activeSectionPlanes.push(planeId);
-      this._updateSectionList();
+      if (planeId) {
+        this._activeSectionPlanes.push(planeId);
+        this._updateSectionList();
+      }
     });
 
     this._on("btn-export-bcf", () => {
@@ -72,9 +73,16 @@ export class UIController {
     // TODO (Task 8): bind btn-annotate to annotation creation flow
   }
 
-  /** Update the section-plane list in the toolbar area */
+  /** Update the section-plane list in the toolbar area (uses event delegation to avoid listener leaks) */
   private _updateSectionList(): void {
     let container = document.getElementById("section-list");
+
+    // Clean up previous delegated listener
+    if (this._sectionListCleanup) {
+      this._sectionListCleanup();
+      this._sectionListCleanup = null;
+    }
+
     if (!container) {
       container = document.createElement("div");
       container.id = "section-list";
@@ -89,29 +97,32 @@ export class UIController {
 
     let html = "";
     for (const id of this._activeSectionPlanes) {
-      html += `<button class="section-chip" data-plane-id="${id}" aria-label="Remove ${id}">✕ ${id}</button>`;
+      html += `<button class="section-chip" data-plane-id="${id}" aria-label="Remove ${id}">&#10005; ${id}</button>`;
     }
     html += `<button id="btn-clear-sections" aria-label="Clear all section planes">Clear All</button>`;
     container.innerHTML = html;
 
-    // Bind remove buttons
-    container.querySelectorAll<HTMLButtonElement>(".section-chip").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const planeId = btn.dataset.planeId;
+    // Single delegated listener on the container (avoids per-button listener leaks)
+    const handler = (e: Event) => {
+      const btn = (e.target as HTMLElement).closest("button");
+      if (!btn) return;
+
+      if (btn.id === "btn-clear-sections") {
+        this.viewer.clearSectionPlanes();
+        this._activeSectionPlanes = [];
+        this._updateSectionList();
+      } else if (btn.classList.contains("section-chip")) {
+        const planeId = btn.getAttribute("data-plane-id");
         if (planeId) {
           this.viewer.removeSectionPlane(planeId);
           this._activeSectionPlanes = this._activeSectionPlanes.filter((p) => p !== planeId);
           this._updateSectionList();
         }
-      });
-    });
+      }
+    };
 
-    // Bind clear-all
-    document.getElementById("btn-clear-sections")?.addEventListener("click", () => {
-      this.viewer.clearSectionPlanes();
-      this._activeSectionPlanes = [];
-      this._updateSectionList();
-    });
+    container.addEventListener("click", handler);
+    this._sectionListCleanup = () => container!.removeEventListener("click", handler);
   }
 
   private _bindSearch(): void {
@@ -122,9 +133,10 @@ export class UIController {
       const metaScene = this.viewer.viewer.metaScene;
 
       if (!query) {
-        // Reset: show all objects, clear X-ray
+        // Reset: show all objects, clear X-ray and highlights
         scene.setObjectsVisible(scene.objectIds, true);
         scene.setObjectsXRayed(scene.objectIds, false);
+        scene.setObjectsHighlighted(scene.highlightedObjectIds, false);
         return;
       }
 
@@ -162,6 +174,44 @@ export class UIController {
       document.body.classList.add("headset-mode");
       console.info("[UIController] Headset mode enabled.");
     }
+  }
+
+  /** Bind global keyboard shortcuts for navigation and tool activation */
+  private _bindKeyboard(): void {
+    document.addEventListener("keydown", (e) => {
+      // Don't intercept when user is typing in an input
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+        return;
+      }
+
+      switch (e.key) {
+        case "Tab":
+          // Tab / Shift+Tab: cycle selection through objects
+          e.preventDefault();
+          this.viewer.cycleSelection(e.shiftKey ? "prev" : "next");
+          break;
+        case "Escape":
+          // Escape: deselect all, close panels
+          this.viewer.selectEntity(null);
+          break;
+        case "m":
+        case "M":
+          // M: toggle measurement (placeholder — Task 2.1)
+          document.getElementById("btn-measure")?.click();
+          break;
+        case "a":
+        case "A":
+          // A: toggle annotation (placeholder — Task 2.3)
+          document.getElementById("btn-annotate")?.click();
+          break;
+        case "x":
+        case "X":
+          // X: toggle X-ray
+          document.getElementById("btn-xray")?.click();
+          break;
+      }
+    });
   }
 
   private _on(id: string, handler: () => void): void {

@@ -33,7 +33,7 @@ async function init(): Promise<void> {
   annotations.loadFromLocalStorage(projectId);
 
   // --- UI wiring ---
-  const ui = new UIController(viewer, loader, annotations);
+  const ui = new UIController(viewer, annotations);
   ui.init();
 
   // --- Model tree (left panel) ---

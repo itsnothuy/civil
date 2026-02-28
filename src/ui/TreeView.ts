@@ -3,7 +3,8 @@
  *
  * Wraps xeokit TreeViewPlugin to provide an IFC model hierarchy tree
  * in the left sidebar. Clicking a node flies the camera to that object
- * and selects it.
+ * and selects it via ViewerCore.selectEntity() so all listeners
+ * (PropertiesPanel, etc.) are notified.
  */
 
 import { TreeViewPlugin } from "@xeokit/xeokit-sdk";
@@ -13,6 +14,7 @@ import type { ViewerCore } from "../viewer/ViewerCore";
 export class TreeView {
   private _viewer: ViewerCore;
   private _treeView: TreeViewPlugin;
+  private _contextMenu: HTMLElement | null = null;
 
   constructor(viewer: ViewerCore, containerId: string) {
     this._viewer = viewer;
@@ -26,24 +28,104 @@ export class TreeView {
       pruneEmptyNodes: true,
     });
 
-    // Clicking a tree node → fly to + select the entity
+    // Clicking a tree node → fly to + select via ViewerCore (fires all listeners)
     this._treeView.on("nodeTitleClicked", (e) => {
       const objectId = e.treeViewNode.objectId;
-      const scene = this._viewer.viewer.scene;
-      const entity = scene.objects[objectId];
+      const entity = this._viewer.viewer.scene.objects[objectId];
       if (!entity) return;
 
-      // Clear previous selection
-      scene.setObjectsSelected(scene.selectedObjectIds, false);
-      scene.setObjectsHighlighted(scene.highlightedObjectIds, false);
-
-      // Select + highlight
-      entity.selected = true;
-      entity.highlighted = true;
+      // Select through ViewerCore so all listeners (PropertiesPanel, etc.) are notified
+      this._viewer.selectEntity(objectId);
 
       // Fly camera to entity
       this._viewer.viewer.cameraFlight.flyTo({ aabb: entity.aabb, duration: 0.5 });
     });
+
+    // Right-click context menu for isolate/hide/show
+    this._initContextMenu(containerId);
+  }
+
+  /** Initialize right-click context menu on tree nodes */
+  private _initContextMenu(containerId: string): void {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Create context menu element
+    this._contextMenu = document.createElement("div");
+    this._contextMenu.className = "tree-context-menu";
+    this._contextMenu.style.display = "none";
+    this._contextMenu.setAttribute("role", "menu");
+    this._contextMenu.setAttribute("aria-label", "Object actions");
+    this._contextMenu.innerHTML = `
+      <button role="menuitem" data-action="isolate" aria-label="Isolate object">Isolate</button>
+      <button role="menuitem" data-action="hide" aria-label="Hide object">Hide</button>
+      <button role="menuitem" data-action="show-all" aria-label="Show all objects">Show All</button>
+    `;
+    document.body.appendChild(this._contextMenu);
+
+    let targetObjectId: string | null = null;
+
+    container.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      // Find the closest tree node link
+      const target = e.target as HTMLElement;
+      const nodeLink = target.closest("a[data-treenodeid]") as HTMLElement | null;
+      if (!nodeLink) {
+        this._hideContextMenu();
+        return;
+      }
+
+      // Extract object ID from the tree node
+      const nodeId = nodeLink.dataset.treenodeid;
+      if (!nodeId) return;
+
+      // xeokit TreeViewPlugin stores objectId on tree nodes
+      const scene = this._viewer.viewer.scene;
+      targetObjectId = scene.objects[nodeId] ? nodeId : null;
+      if (!targetObjectId) return;
+
+      // Position and show menu
+      this._contextMenu!.style.display = "block";
+      this._contextMenu!.style.left = `${e.clientX}px`;
+      this._contextMenu!.style.top = `${e.clientY}px`;
+    });
+
+    // Handle menu actions
+    this._contextMenu.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest("button");
+      if (!btn || !targetObjectId) return;
+
+      const action = btn.dataset.action;
+      const scene = this._viewer.viewer.scene;
+
+      switch (action) {
+        case "isolate":
+          // X-ray everything, un-xray target
+          scene.setObjectsXRayed(scene.objectIds, true);
+          scene.setObjectsXRayed([targetObjectId], false);
+          scene.setObjectsHighlighted(scene.highlightedObjectIds, false);
+          scene.setObjectsHighlighted([targetObjectId], true);
+          break;
+        case "hide":
+          scene.setObjectsVisible([targetObjectId], false);
+          break;
+        case "show-all":
+          scene.setObjectsVisible(scene.objectIds, true);
+          scene.setObjectsXRayed(scene.objectIds, false);
+          break;
+      }
+
+      this._hideContextMenu();
+    });
+
+    // Close menu on click elsewhere
+    document.addEventListener("click", () => this._hideContextMenu());
+  }
+
+  private _hideContextMenu(): void {
+    if (this._contextMenu) {
+      this._contextMenu.style.display = "none";
+    }
   }
 
   /** Get the underlying TreeViewPlugin for advanced usage */
@@ -71,7 +153,9 @@ export class TreeView {
     this._treeView.expandToDepth(depth);
   }
 
+  /** Destroy the tree view and remove context menu */
   destroy(): void {
+    this._contextMenu?.remove();
     this._treeView.destroy();
   }
 }

@@ -133,7 +133,7 @@ button[aria-pressed="true"] {
 
 .section-chip {
   min-width: auto;
-  min-height: 32px;
+  min-height: var(--btn-min-size);
   padding: 0 8px;
   font-size: 11px;
   border-color: var(--color-accent);
@@ -274,4 +274,35 @@ body.headset-mode #app {
   #toolbar {
     overflow-x: auto;
   }
+}
+
+/* ---- Tree context menu ---- */
+.tree-context-menu {
+  position: fixed;
+  z-index: 10000;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 4px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.tree-context-menu button {
+  display: block;
+  width: 100%;
+  min-height: var(--btn-min-size);
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--color-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tree-context-menu button:hover,
+.tree-context-menu button:focus-visible {
+  background: var(--color-border);
+  color: var(--color-accent);
 }

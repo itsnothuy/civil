@@ -14,13 +14,6 @@ import { GLTFLoaderPlugin } from "@xeokit/xeokit-sdk";
 
 import type { ViewerCore } from "../viewer/ViewerCore";
 
-export interface ProjectConfig {
-  id: string;
-  name: string;
-  modelUrl: string;
-  metadataUrl: string;
-}
-
 export class ModelLoader {
   private _viewer: ViewerCore;
   private _gltfLoader: GLTFLoaderPlugin;
@@ -55,10 +48,11 @@ export class ModelLoader {
 
       sceneModel.on("error", (msg: string) => {
         console.error(`[ModelLoader] Failed to load project "${projectId}": ${msg}`);
-        // Show user-facing error
+        // Show user-facing error (escape HTML to prevent XSS)
         const panel = document.getElementById("properties-panel");
         if (panel) {
-          panel.innerHTML = `<p class="error">Failed to load model: ${msg}</p>`;
+          const safeMsg = msg.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          panel.innerHTML = `<p class="error">Failed to load model: ${safeMsg}</p>`;
         }
         reject(new Error(msg));
       });
