@@ -11,6 +11,7 @@ import { ModelLoader } from "./loader/ModelLoader";
 import { AnnotationService } from "./annotations/AnnotationService";
 import { UIController } from "./ui/UIController";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
+import { TreeView } from "./ui/TreeView";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -35,11 +36,15 @@ async function init(): Promise<void> {
   const ui = new UIController(viewer, loader, annotations);
   ui.init();
 
+  // --- Model tree (left panel) ---
+  const _treeView = new TreeView(viewer, "tree-view");
+
   // --- Properties panel (click-to-select) ---
   const propertiesPanel = new PropertiesPanel(viewer);
   viewer.onSelect((entityId) => {
     if (entityId) {
       propertiesPanel.show(entityId);
+      _treeView.showNode(entityId);
     } else {
       propertiesPanel.hide();
     }

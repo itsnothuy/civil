@@ -123,6 +123,40 @@ button[aria-pressed="true"] {
   color: #fff;
 }
 
+/* ---- Tree view (xeokit TreeViewPlugin) ---- */
+#tree-view {
+  font-size: 13px;
+}
+
+#tree-view ul {
+  list-style: none;
+  padding-left: 16px;
+  margin: 0;
+}
+
+#tree-view li {
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+#tree-view li a {
+  color: var(--color-text);
+  text-decoration: none;
+  display: inline-block;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+#tree-view li a:hover {
+  background: var(--color-border);
+}
+
+#tree-view .highlighted-node {
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: 3px;
+}
+
 /* ---- Search input ---- */
 #search-input {
   width: 100%;

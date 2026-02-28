@@ -72,9 +72,33 @@ export class UIController {
   private _bindSearch(): void {
     const input = document.getElementById("search-input") as HTMLInputElement | null;
     input?.addEventListener("input", (e) => {
-      const query = (e.target as HTMLInputElement).value.toLowerCase();
-      // TODO (Task 1): filter xeokit scene objects by name/IFC type
-      console.info(`[UIController] Search: "${query}"`);
+      const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+      const scene = this.viewer.viewer.scene;
+      const metaScene = this.viewer.viewer.metaScene;
+
+      if (!query) {
+        // Reset: show all objects, clear X-ray
+        scene.setObjectsVisible(scene.objectIds, true);
+        scene.setObjectsXRayed(scene.objectIds, false);
+        return;
+      }
+
+      // Search meta-objects by name or IFC type
+      const matchedIds: string[] = [];
+      for (const id of Object.keys(metaScene.metaObjects)) {
+        const meta = metaScene.metaObjects[id];
+        const name = (meta.name ?? "").toLowerCase();
+        const type = (meta.type ?? "").toLowerCase();
+        if (name.includes(query) || type.includes(query)) {
+          matchedIds.push(id);
+        }
+      }
+
+      // X-ray non-matching, highlight matching
+      scene.setObjectsXRayed(scene.objectIds, true);
+      scene.setObjectsXRayed(matchedIds, false);
+      scene.setObjectsHighlighted(scene.highlightedObjectIds, false);
+      scene.setObjectsHighlighted(matchedIds, true);
     });
   }
 
