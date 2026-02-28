@@ -14,6 +14,7 @@ import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { TreeView } from "./ui/TreeView";
 import { MeasurementTool } from "./tools/MeasurementTool";
 import { AnnotationOverlay } from "./annotations/AnnotationOverlay";
+import { FilterPanel } from "./ui/FilterPanel";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -39,6 +40,10 @@ async function init(): Promise<void> {
 
   // --- Annotation overlay (3D markers) ---
   const annotationOverlay = new AnnotationOverlay(viewer, annotations, projectId);
+
+  // --- Layer/discipline filtering ---
+  const filterPanel = new FilterPanel(viewer, "filter-container");
+  filterPanel.init();
 
   // --- UI wiring ---
   const ui = new UIController(viewer, annotations, projectId, measurementTool, annotationOverlay);
