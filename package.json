@@ -21,7 +21,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "convert": "node scripts/convert-ifc.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "benchmark": "npx tsx tests/performance/benchmark.ts"
   },
   "dependencies": {
     "@xeokit/xeokit-sdk": "^2.6.0"
