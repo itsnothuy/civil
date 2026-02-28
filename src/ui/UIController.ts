@@ -50,7 +50,8 @@ export class UIController {
     });
 
     this._on("btn-section", () => {
-      this.viewer.addSectionPlane();
+      const planeId = this.viewer.addSectionPlane();
+      console.info(`[UIController] Section plane created: ${planeId}`);
     });
 
     this._on("btn-export-bcf", () => {
