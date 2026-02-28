@@ -89,6 +89,27 @@ export class UIController {
       fileInput?.click();
     });
 
+    // High-contrast toggle (Task 3.2)
+    this._on("btn-high-contrast", () => {
+      const isHC = document.body.classList.toggle("high-contrast");
+      this._setPressed("btn-high-contrast", isHC);
+      try {
+        localStorage.setItem("civil-bim-high-contrast", isHC ? "1" : "0");
+      } catch {
+        /* localStorage unavailable */
+      }
+    });
+
+    // Restore high-contrast from localStorage
+    try {
+      if (localStorage.getItem("civil-bim-high-contrast") === "1") {
+        document.body.classList.add("high-contrast");
+        this._setPressed("btn-high-contrast", true);
+      }
+    } catch {
+      /* localStorage unavailable */
+    }
+
     const fileInput = document.getElementById("import-file-input") as HTMLInputElement | null;
     if (fileInput) {
       fileInput.addEventListener("change", () => {
