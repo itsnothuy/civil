@@ -9,11 +9,13 @@
 import type { ViewerCore } from "../viewer/ViewerCore";
 import type { AnnotationService } from "../annotations/AnnotationService";
 import type { MeasurementTool } from "../tools/MeasurementTool";
+import type { AnnotationOverlay } from "../annotations/AnnotationOverlay";
 
 export class UIController {
   private viewer: ViewerCore;
   private annotations: AnnotationService;
   private _measurementTool: MeasurementTool | null;
+  private _annotationOverlay: AnnotationOverlay | null;
 
   private _activeSectionPlanes: string[] = [];
   private _sectionListCleanup: (() => void) | null = null;
@@ -22,10 +24,12 @@ export class UIController {
     viewer: ViewerCore,
     annotations: AnnotationService,
     measurementTool?: MeasurementTool,
+    annotationOverlay?: AnnotationOverlay,
   ) {
     this.viewer = viewer;
     this.annotations = annotations;
     this._measurementTool = measurementTool ?? null;
+    this._annotationOverlay = annotationOverlay ?? null;
   }
 
   /** Initialize all UI bindings */
@@ -77,6 +81,28 @@ export class UIController {
     });
 
     // TODO (Task 8): bind btn-annotate to annotation creation flow
+
+    // Annotation overlay toggle (Task 2.3)
+    this._on("btn-annotate", () => {
+      if (!this._annotationOverlay) return;
+      const btn = document.getElementById("btn-annotate");
+      if (this._annotationOverlay.isAdding) {
+        this._annotationOverlay.stopAdding();
+        btn?.setAttribute("aria-pressed", "false");
+      } else {
+        // Deactivate measurement modes first
+        if (this._measurementTool?.isActive) {
+          this._measurementTool.deactivate();
+          this._setPressed("btn-measure", false);
+        }
+        if (this._measurementTool?.pathMode) {
+          this._measurementTool.endPath();
+          this._setPressed("btn-path-measure", false);
+        }
+        this._annotationOverlay.startAdding();
+        btn?.setAttribute("aria-pressed", "true");
+      }
+    });
 
     // Measurement tool toggle (Task 2.1)
     this._on("btn-measure", () => {
@@ -242,6 +268,10 @@ export class UIController {
           if (this._measurementTool?.pathMode) {
             this._measurementTool.endPath();
             document.getElementById("btn-path-measure")?.setAttribute("aria-pressed", "false");
+          }
+          if (this._annotationOverlay?.isAdding) {
+            this._annotationOverlay.stopAdding();
+            document.getElementById("btn-annotate")?.setAttribute("aria-pressed", "false");
           }
           break;
         case "m":

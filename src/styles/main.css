@@ -306,3 +306,89 @@ body.headset-mode #app {
   background: var(--color-border);
   color: var(--color-accent);
 }
+
+/* ---- Annotation markers & labels ---- */
+.ann-marker {
+  cursor: pointer;
+  font-size: 20px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+  transition: transform 0.15s;
+}
+
+.ann-marker:hover {
+  transform: scale(1.3);
+}
+
+.ann-label {
+  max-width: 220px;
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+.ann-label strong {
+  color: var(--color-accent);
+}
+
+.ann-label em {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+/* ---- Annotation creation form ---- */
+.annotation-form {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10001;
+  width: 280px;
+  padding: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  color: var(--color-text);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.annotation-form label {
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.annotation-form textarea,
+.annotation-form select {
+  width: 100%;
+  padding: 8px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.annotation-form textarea:focus,
+.annotation-form select:focus {
+  outline: 2px solid var(--color-accent);
+}
+
+.annotation-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

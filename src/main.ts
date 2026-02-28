@@ -13,6 +13,7 @@ import { UIController } from "./ui/UIController";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { TreeView } from "./ui/TreeView";
 import { MeasurementTool } from "./tools/MeasurementTool";
+import { AnnotationOverlay } from "./annotations/AnnotationOverlay";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -36,8 +37,11 @@ async function init(): Promise<void> {
   // --- Measurement tool ---
   const measurementTool = new MeasurementTool(viewer);
 
+  // --- Annotation overlay (3D markers) ---
+  const annotationOverlay = new AnnotationOverlay(viewer, annotations, projectId);
+
   // --- UI wiring ---
-  const ui = new UIController(viewer, annotations, measurementTool);
+  const ui = new UIController(viewer, annotations, measurementTool, annotationOverlay);
   ui.init();
 
   // --- Model tree (left panel) ---
