@@ -17,9 +17,15 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
   };
 })();
 Object.defineProperty(global, "localStorage", { value: localStorageMock });
@@ -92,7 +98,7 @@ describe("AnnotationService", () => {
       expect(updated).not.toBeNull();
       // updatedAt should be a valid ISO string, same or later than createdAt
       expect(new Date(updated!.updatedAt).getTime()).toBeGreaterThanOrEqual(
-        new Date(ann.createdAt).getTime()
+        new Date(ann.createdAt).getTime(),
       );
     });
 

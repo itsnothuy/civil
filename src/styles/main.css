@@ -4,7 +4,9 @@
    headset-mode class applied by UIController for XR devices.
    ========================================================= */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -19,8 +21,8 @@
   --color-text-muted: #9a9ab0;
   --toolbar-height: 48px;
   --panel-width: 260px;
-  --btn-min-size: 44px;       /* WCAG 2.5.5: 44×44 px minimum target */
-  --btn-headset-size: 64px;   /* Vision Pro: >10 mm ≈ 60+ px at arm's length */
+  --btn-min-size: 44px; /* WCAG 2.5.5: 44×44 px minimum target */
+  --btn-headset-size: 64px; /* Vision Pro: >10 mm ≈ 60+ px at arm's length */
 }
 
 /* High-contrast mode (Task 9, E2) */
@@ -35,7 +37,10 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 14px;
   color: var(--color-text);
   background: var(--color-bg);
@@ -69,8 +74,12 @@ body {
   padding: 12px;
 }
 
-#panel-tree { border-right: 1px solid var(--color-border); }
-#panel-properties { border-left: 1px solid var(--color-border); }
+#panel-tree {
+  border-right: 1px solid var(--color-border);
+}
+#panel-properties {
+  border-left: 1px solid var(--color-border);
+}
 
 #viewer-canvas {
   background: #0a0a1a;
@@ -88,7 +97,9 @@ button {
   color: var(--color-text);
   cursor: pointer;
   font-size: 13px;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 button:hover,

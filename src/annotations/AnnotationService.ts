@@ -78,7 +78,10 @@ export class AnnotationService {
   }
 
   /** Add a new annotation */
-  add(projectId: string, annotation: Omit<Annotation, "id" | "createdAt" | "updatedAt" | "schemaVersion">): Annotation {
+  add(
+    projectId: string,
+    annotation: Omit<Annotation, "id" | "createdAt" | "updatedAt" | "schemaVersion">,
+  ): Annotation {
     const now = new Date().toISOString();
     const full: Annotation = {
       ...annotation,
