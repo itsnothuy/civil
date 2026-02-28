@@ -10,6 +10,7 @@ import { ViewerCore } from "./viewer/ViewerCore";
 import { ModelLoader } from "./loader/ModelLoader";
 import { AnnotationService } from "./annotations/AnnotationService";
 import { UIController } from "./ui/UIController";
+import { PropertiesPanel } from "./ui/PropertiesPanel";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -33,6 +34,16 @@ async function init(): Promise<void> {
   // --- UI wiring ---
   const ui = new UIController(viewer, loader, annotations);
   ui.init();
+
+  // --- Properties panel (click-to-select) ---
+  const propertiesPanel = new PropertiesPanel(viewer);
+  viewer.onSelect((entityId) => {
+    if (entityId) {
+      propertiesPanel.show(entityId);
+    } else {
+      propertiesPanel.hide();
+    }
+  });
 
   console.info(`[CivilBIMViewer] Project "${projectId}" loaded.`);
 }

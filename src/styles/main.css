@@ -139,6 +139,47 @@ button[aria-pressed="true"] {
   outline: 2px solid var(--color-accent);
 }
 
+/* ---- Properties panel ---- */
+#properties-panel h3 {
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: var(--color-accent);
+}
+
+#properties-panel h4 {
+  margin: 12px 0 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#properties-panel dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+
+#properties-panel dt {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+#properties-panel dd {
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+#properties-panel .muted {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+#properties-panel .error {
+  color: var(--color-accent);
+}
+
 /* ---- Headset / Vision Pro mode ---- */
 /* Applied by UIController._detectHeadsetMode() */
 body.headset-mode {

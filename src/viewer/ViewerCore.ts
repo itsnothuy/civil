@@ -14,6 +14,9 @@ import { Viewer, SectionPlanesPlugin, NavCubePlugin } from "@xeokit/xeokit-sdk";
 
 export type ViewMode = "3d" | "2d";
 
+/** Callback fired when an object is selected or deselected */
+export type SelectionCallback = (entityId: string | null, worldPos: number[] | null) => void;
+
 export class ViewerCore {
   private canvasId: string;
   private _viewer!: Viewer;
@@ -21,6 +24,7 @@ export class ViewerCore {
   private _navCube: NavCubePlugin | null = null;
   private _planeCounter = 0;
   private _currentMode: ViewMode = "3d";
+  private _onSelect: SelectionCallback | null = null;
 
   constructor(canvasId: string) {
     this.canvasId = canvasId;
@@ -81,7 +85,38 @@ export class ViewerCore {
     this._viewer.camera.look = [0, 0, 0];
     this._viewer.camera.up = [0, 1, 0];
 
+    // Wire object picking (click-to-select)
+    this._initSelection();
+
     console.info(`[ViewerCore] Initialized with canvas #${this.canvasId}`);
+  }
+
+  /** Wire canvas click → pick → select/highlight → callback */
+  private _initSelection(): void {
+    this._viewer.cameraControl.on("picked", (pickResult) => {
+      // Clear previous selection
+      this._viewer.scene.setObjectsSelected(this._viewer.scene.selectedObjectIds, false);
+      this._viewer.scene.setObjectsHighlighted(this._viewer.scene.highlightedObjectIds, false);
+
+      const entity = pickResult.entity;
+      if (entity) {
+        entity.selected = true;
+        entity.highlighted = true;
+        const worldPos = pickResult.worldPos ?? null;
+        this._onSelect?.(String(entity.id), worldPos);
+      }
+    });
+
+    this._viewer.cameraControl.on("pickedNothing", () => {
+      this._viewer.scene.setObjectsSelected(this._viewer.scene.selectedObjectIds, false);
+      this._viewer.scene.setObjectsHighlighted(this._viewer.scene.highlightedObjectIds, false);
+      this._onSelect?.(null, null);
+    });
+  }
+
+  /** Register a callback for object selection changes */
+  onSelect(callback: SelectionCallback): void {
+    this._onSelect = callback;
   }
 
   /** Switch between 3D orbit and 2D orthographic plan view */
