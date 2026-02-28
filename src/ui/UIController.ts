@@ -37,11 +37,25 @@ export class UIController {
 
   /** Initialize all UI bindings */
   init(): void {
+    this._restoreHighContrast();
     this._bindToolbar();
     this._bindSearch();
     this._bindKeyboard();
     this._detectHeadsetMode();
     console.info("[UIController] Initialized.");
+  }
+
+  /** Restore high-contrast preference from localStorage (Task 3.2) */
+  private _restoreHighContrast(): void {
+    try {
+      const stored = localStorage.getItem("civil-bim-high-contrast");
+      if (stored === "true") {
+        document.body.classList.add("high-contrast");
+        document.getElementById("btn-high-contrast")?.setAttribute("aria-pressed", "true");
+      }
+    } catch {
+      // localStorage may be unavailable
+    }
   }
 
   private _bindToolbar(): void {
@@ -62,6 +76,20 @@ export class UIController {
       const active = btn?.getAttribute("aria-pressed") === "true";
       this.viewer.setXray(!active);
       btn?.setAttribute("aria-pressed", String(!active));
+    });
+
+    // High-contrast toggle (Task 3.2)
+    this._on("btn-high-contrast", () => {
+      const btn = document.getElementById("btn-high-contrast");
+      const isActive = btn?.getAttribute("aria-pressed") === "true";
+      const newState = !isActive;
+      document.body.classList.toggle("high-contrast", newState);
+      btn?.setAttribute("aria-pressed", String(newState));
+      try {
+        localStorage.setItem("civil-bim-high-contrast", String(newState));
+      } catch {
+        // localStorage may be unavailable
+      }
     });
 
     this._on("btn-section", () => {

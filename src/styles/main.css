@@ -36,6 +36,16 @@
   }
 }
 
+/* Class-based high-contrast toggle (Task 3.2) */
+body.high-contrast {
+  --color-bg: #000;
+  --color-surface: #111;
+  --color-border: #fff;
+  --color-accent: #ffff00;
+  --color-text: #fff;
+  --color-text-muted: #ccc;
+}
+
 body {
   font-family:
     system-ui,
