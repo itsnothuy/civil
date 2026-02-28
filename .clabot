@@ -1,0 +1,10 @@
+{
+  "https://github.com/itsnothuy/civil": {
+    "message": "You must sign the Contributor License Agreement (CLA) before your PR can be merged. Please read [CLA.md](CLA.md) and follow the instructions.",
+    "label": "cla-signed",
+    "recheckComment": "recheck",
+    "claFilePath": "CLA.md",
+    "allowRemoteChanges": false,
+    "signedUsers": []
+  }
+}

@@ -106,6 +106,35 @@
 
 ### 8) Proposed Edits
 
+<!-- ADDED 2026-03-01: Effort estimates per I-16 resolution -->
+
+### 8a) Effort Estimates (I-16 Resolution)
+
+> Estimates assume **1 developer**, measured in **dev-days** (8h/day). Based on current codebase state as of 2026-03-01.
+> Confidence levels: H = high (well-understood), M = medium (some unknowns), L = low (significant unknowns).
+
+| Feature | Priority | Current State | Effort (dev-days) | Confidence | Dependencies | Notes |
+|---------|----------|---------------|-------------------|------------|-------------|-------|
+| Orbit/Pan/Zoom | P0 (MVP) | STUB | 2-3 | H | Model Loading | xeokit CameraControl API is well-documented. Wire up existing controls + touch gestures. |
+| Object Selection & Properties | P0 (MVP) | STUB | 3-4 | M | Orbit/Pan/Zoom | Selection is straightforward; properties panel UI needs design + IFC property parsing. |
+| Search & Tree View | P0 (MVP) | STUB | 4-5 | M | Object Selection | xeokit TreeViewPlugin exists but needs customization for IFC type filtering. Fuzzy search adds complexity. |
+| 3D↔2D Camera Toggle | P0 (MVP) | STUB | 1-2 | H | Orbit/Pan/Zoom | Switch between `perspective` and `ortho` projection modes. Simple API call. |
+| Section Planes | P1 (MVP) | STUB | 3-4 | M | Viewer Core | xeokit SectionPlanesPlugin exists. UI for add/move/remove planes + serialization to viewer state. |
+| Measurement Tool | P0 (MVP) | MISSING | 5-7 | M | Object Selection | xeokit DistanceMeasurementsPlugin exists but needs civil-specific adaptations (unit switching, tolerance, cumulative path). |
+| 2D/Plan Navigation (basic toggle) | P0 (MVP) | STUB | 1 | H | 3D↔2D Toggle | Covered by 3D↔2D toggle above. Full floor nav is V1. |
+| 2D/Plan Navigation (floor-aware) | V1 | NOT STARTED | 5-8 | L | Tree View, Model Loading | Requires IfcBuildingStorey parsing, floor selector UI, 2D overlay rendering. |
+
+**MVP Total (P0 + P1): 19-26 dev-days → ~4-5 weeks (1 dev) or ~2-3 weeks (2 devs)**
+
+| Category | Dev-days |
+|----------|----------|
+| P0 features (E1) | 16-22 |
+| P1 features (E1) | 3-4 |
+| Testing + bug fixes buffer (30%) | 6-8 |
+| **E1 Total** | **25-34** |
+
+> **Honest note:** These estimates do not include E2 MVP features (annotations already implemented; layer filtering, cumulative path, JSON import are separate). Combined E1+E2 MVP estimate is in the E2 document.
+
 | Priority | Location | Edit |
 |----------|----------|------|
 | **P0** | Measurement Tool, AC "measurement persists in session" | Clarify storage: "Measurement persists in session (in-memory); lost on page reload. Export to BCF/JSON if persistence needed." |

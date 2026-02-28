@@ -125,6 +125,49 @@
 
 ### 8) Proposed Edits
 
+<!-- ADDED 2026-03-01: Effort estimates per I-16 resolution -->
+
+### 8a) Effort Estimates (I-16 Resolution)
+
+> Estimates assume **1 developer**, measured in **dev-days** (8h/day). Based on current codebase state as of 2026-03-01.
+> Confidence levels: H = high (well-understood), M = medium (some unknowns), L = low (significant unknowns).
+
+| Feature | Priority | Current State | Effort (dev-days) | Confidence | Dependencies | Notes |
+|---------|----------|---------------|-------------------|------------|-------------|-------|
+| Utility & Layer Filtering | P0 (MVP) | MISSING | 4-6 | M | Tree View, Model Loading | Parse IFC ObjectType/Pset_Common.Category; build filter panel UI; X-ray/hide toggle per layer. Metadata quality in real IFC models is the risk. |
+| Annotations/Markups | P0 (MVP) | IMPLEMENTED | 0 | H | — | AnnotationService CRUD + localStorage is complete. |
+| Issue Export (JSON) | P0 (MVP) | IMPLEMENTED | 0 | H | Annotations | exportJSON() exists. |
+| Issue Import (JSON from file) | P0 (MVP) | MISSING | 1-2 | H | Annotations | File picker UI + parse JSON + call AnnotationService.add(). Straightforward. |
+| Cumulative Path Distance | P0 (MVP) | MISSING | 3-4 | M | Measurement Tool (E1) | User picks multiple points; display running total. Simpler than full chain/stationing (V1). |
+| High-contrast Mode | P1 (MVP) | PARTIAL | 1-2 | H | — | CSS exists; add toggle button in UI + persist preference in localStorage. |
+| Keyboard Navigation | P1 (MVP) | PARTIAL | 2-3 | M | UI Layer | ARIA buttons exist; add tab order, focus indicators, keyboard shortcuts (Esc, Enter, arrows). Test with screen reader. |
+| Chain/Stationing (alignment-aware) | V1 | NOT STARTED | 6-10 | L | Cumulative Path, Model Loading | Requires IfcAlignment parsing or manual polyline selection logic. CSV/JSON export. High uncertainty. |
+| BCF 2.1 Export/Import | V1 | TODO stubs | 5-8 | M | Annotations | BCF XML/zip schema is well-defined but complex. Need viewpoint serialization + round-trip testing with BIMcollab. |
+| Markup Collaboration | V1 | NOT STARTED | 8-12 | L | Annotations, Auth | Real-time sync (WebSocket), conflict strategy, remote storage API. |
+| Localization | V1 | NOT STARTED | 3-5 | M | UI Layer | Externalize all strings to JSON; integrate i18next or similar; add language switcher. |
+| Real-time Collaboration | V2 | NOT STARTED | 15-25 | L | Markup Collab | WebRTC/WebSocket sessions, role management, presence indicators. Major feature. |
+| Plugin System | V2 | NOT STARTED | 10-15 | L | Viewer Core API | Plugin manifest, lifecycle, API surface, sandboxing, docs. Major feature. |
+| Mobile Offline Support | V2 | NOT STARTED | 8-12 | L | Service Worker | Cache API, IndexedDB, sync protocol. iOS Safari limitations add risk. |
+
+**E2 MVP Total (P0 + P1):**
+
+| Category | Dev-days |
+|----------|----------|
+| P0 features (E2) | 8-12 |
+| P1 features (E2) | 3-5 |
+| Testing + bug fixes buffer (30%) | 3-5 |
+| **E2 MVP Total** | **14-22** |
+
+**Combined E1 + E2 MVP Total:**
+
+| Scope | Dev-days | 1 Dev | 2 Devs |
+|-------|----------|-------|--------|
+| E1 MVP | 25-34 | 5-7 weeks | 3-4 weeks |
+| E2 MVP | 14-22 | 3-4 weeks | 1.5-2.5 weeks |
+| **Total** | **39-56** | **8-11 weeks** | **4-6 weeks** |
+
+> **Honest assessment:** The original 6-week timeline is achievable with 2 dedicated developers if xeokit integration goes smoothly (confidence: 50%). More realistic target: **7-8 weeks with 2 devs**, with P1 features (section planes, high-contrast, keyboard nav) potentially slipping to a v0.2 patch. With 1 developer, expect 10-12 weeks.
+
 | Priority | Location | Edit |
 |----------|----------|------|
 | **P0** | Chain/Stationing Measurement, Description "if alignment is not defined" | Clarify: "User manually selects a polyline or series of connected linear elements. Auto-detection (if model has IfcAlignment) may be added in V1.1." |

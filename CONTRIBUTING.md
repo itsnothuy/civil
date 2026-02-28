@@ -85,6 +85,21 @@ Use the GitHub Issue templates:
 
 Please include reproduction steps and, where possible, a sample IFC file (keep it small — <5 MB).
 
+## Contributor License Agreement (CLA)
+
+This project uses **dual-licensing** (AGPL-3.0 + commercial). To enable this, all contributors must sign a Contributor License Agreement before their first PR can be merged.
+
+**What happens:**
+1. When you open your first PR, the **CLA Assistant** bot will comment with instructions.
+2. You sign by commenting: `I have read the CLA Document and I hereby sign the CLA`
+3. Your signature is recorded and covers all future contributions.
+
+Read the full CLA: [CLA.md](CLA.md)
+
+**Why is this needed?** The CLA grants the project maintainers the right to sublicense contributions under both the AGPL-3.0 open-source license and a commercial license for organizations that cannot use AGPL software. Contributors retain full copyright of their work.
+
 ## License
 
-By contributing, you agree your changes will be licensed under the project's AGPL-3.0 license.
+By contributing, you agree that:
+1. Your changes will be licensed under the project's **AGPL-3.0-or-later** license.
+2. Per the CLA, the project maintainers may additionally sublicense your contributions under a commercial license.
