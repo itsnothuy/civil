@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8,20 +8,33 @@
     <link rel="stylesheet" href="./styles/main.css" />
   </head>
   <body>
+    <a href="#viewer-canvas" class="skip-link" id="skip-to-viewer">Skip to viewer</a>
     <div id="app">
       <!-- Viewer toolbar -->
       <header id="toolbar" role="banner" aria-label="Viewer toolbar">
         <button id="btn-3d" aria-label="Switch to 3D view" aria-pressed="true">3D</button>
         <button id="btn-2d" aria-label="Switch to 2D plan view" aria-pressed="false">2D</button>
-        <button id="btn-measure" aria-label="Activate measurement tool" aria-pressed="false">Measure</button>
-        <button id="btn-path-measure" aria-label="Activate path measurement" aria-pressed="false">Path</button>
+        <button id="btn-measure" aria-label="Activate measurement tool" aria-pressed="false">
+          Measure
+        </button>
+        <button id="btn-path-measure" aria-label="Activate path measurement" aria-pressed="false">
+          Path
+        </button>
         <button id="btn-annotate" aria-label="Add annotation" aria-pressed="false">Annotate</button>
         <button id="btn-section" aria-label="Add section plane">Section</button>
         <button id="btn-xray" aria-label="Toggle X-ray mode">X-Ray</button>
         <button id="btn-export-bcf" aria-label="Export issues as BCF">Export BCF</button>
         <button id="btn-import-json" aria-label="Import annotations from JSON file">Import</button>
-        <input id="import-file-input" type="file" accept=".json,application/json" hidden aria-hidden="true" />
-        <button id="btn-high-contrast" aria-label="Toggle high-contrast mode" aria-pressed="false">Contrast</button>
+        <input
+          id="import-file-input"
+          type="file"
+          accept=".json,application/json"
+          hidden
+          aria-hidden="true"
+        />
+        <button id="btn-high-contrast" aria-label="Toggle high-contrast mode" aria-pressed="false">
+          Contrast
+        </button>
       </header>
 
       <!-- Left panel: model tree -->
@@ -37,10 +50,19 @@
       </aside>
 
       <!-- Main 3D viewer area -->
-      <main id="viewer-container" role="main" aria-label="3D model viewer" style="position: relative;">
+      <main
+        id="viewer-container"
+        role="main"
+        aria-label="3D model viewer"
+        style="position: relative"
+      >
         <canvas id="viewer-canvas"></canvas>
-        <canvas id="nav-cube-canvas" width="200" height="200"
-                style="position:absolute; bottom:10px; right:10px; z-index:200;"></canvas>
+        <canvas
+          id="nav-cube-canvas"
+          width="200"
+          height="200"
+          style="position: absolute; bottom: 10px; right: 10px; z-index: 200"
+        ></canvas>
       </main>
 
       <!-- Right panel: properties + annotations -->

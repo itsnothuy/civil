@@ -331,13 +331,30 @@ export class UIController {
           break;
         case "m":
         case "M":
-          // M: toggle measurement (placeholder — Task 2.1)
+          // M: toggle measurement
           document.getElementById("btn-measure")?.click();
           break;
         case "a":
         case "A":
-          // A: toggle annotation (placeholder — Task 2.3)
+          // A: toggle annotation
           document.getElementById("btn-annotate")?.click();
+          break;
+        case "h":
+        case "H":
+          // H: toggle high-contrast
+          document.getElementById("btn-high-contrast")?.click();
+          break;
+        case "f":
+        case "F":
+          // F: focus filter panel
+          {
+            const filterContainer = document.getElementById("filter-container");
+            if (filterContainer) {
+              const firstCheckbox =
+                filterContainer.querySelector<HTMLInputElement>("input[type=checkbox]");
+              firstCheckbox?.focus();
+            }
+          }
           break;
         case "z":
         case "Z":

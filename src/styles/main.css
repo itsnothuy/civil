@@ -58,6 +58,25 @@ body {
   overflow: hidden;
 }
 
+/* ---- Skip link (a11y Task 3.3) ---- */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 8px;
+  z-index: 100000;
+  padding: 8px 16px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
 /* ---- Layout ---- */
 #app {
   display: grid;
@@ -180,6 +199,12 @@ button[aria-pressed="true"] {
 }
 
 #tree-view li a:hover {
+  background: var(--color-border);
+}
+
+#tree-view li a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
   background: var(--color-border);
 }
 
