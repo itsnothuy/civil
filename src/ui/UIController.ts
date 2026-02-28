@@ -16,6 +16,8 @@ export class UIController {
   private _loader: ModelLoader;
   private annotations: AnnotationService;
 
+  private _activeSectionPlanes: string[] = [];
+
   constructor(viewer: ViewerCore, loader: ModelLoader, annotations: AnnotationService) {
     this.viewer = viewer;
     this._loader = loader;
@@ -51,7 +53,8 @@ export class UIController {
 
     this._on("btn-section", () => {
       const planeId = this.viewer.addSectionPlane();
-      console.info(`[UIController] Section plane created: ${planeId}`);
+      this._activeSectionPlanes.push(planeId);
+      this._updateSectionList();
     });
 
     this._on("btn-export-bcf", () => {
@@ -67,6 +70,48 @@ export class UIController {
 
     // TODO (Task 8): bind btn-measure to MeasurementTool
     // TODO (Task 8): bind btn-annotate to annotation creation flow
+  }
+
+  /** Update the section-plane list in the toolbar area */
+  private _updateSectionList(): void {
+    let container = document.getElementById("section-list");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "section-list";
+      container.setAttribute("aria-label", "Active section planes");
+      document.getElementById("toolbar")?.appendChild(container);
+    }
+
+    if (this._activeSectionPlanes.length === 0) {
+      container.innerHTML = "";
+      return;
+    }
+
+    let html = "";
+    for (const id of this._activeSectionPlanes) {
+      html += `<button class="section-chip" data-plane-id="${id}" aria-label="Remove ${id}">✕ ${id}</button>`;
+    }
+    html += `<button id="btn-clear-sections" aria-label="Clear all section planes">Clear All</button>`;
+    container.innerHTML = html;
+
+    // Bind remove buttons
+    container.querySelectorAll<HTMLButtonElement>(".section-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const planeId = btn.dataset.planeId;
+        if (planeId) {
+          this.viewer.removeSectionPlane(planeId);
+          this._activeSectionPlanes = this._activeSectionPlanes.filter((p) => p !== planeId);
+          this._updateSectionList();
+        }
+      });
+    });
+
+    // Bind clear-all
+    document.getElementById("btn-clear-sections")?.addEventListener("click", () => {
+      this.viewer.clearSectionPlanes();
+      this._activeSectionPlanes = [];
+      this._updateSectionList();
+    });
   }
 
   private _bindSearch(): void {

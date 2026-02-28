@@ -123,6 +123,28 @@ button[aria-pressed="true"] {
   color: #fff;
 }
 
+/* ---- Section-plane chips ---- */
+#section-list {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.section-chip {
+  min-width: auto;
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 11px;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.section-chip:hover {
+  background: var(--color-accent);
+  color: #fff;
+}
+
 /* ---- Tree view (xeokit TreeViewPlugin) ---- */
 #tree-view {
   font-size: 13px;
