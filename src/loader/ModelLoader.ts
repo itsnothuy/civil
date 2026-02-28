@@ -10,6 +10,8 @@
  * See: scripts/convert-ifc.mjs
  */
 
+import { GLTFLoaderPlugin } from "@xeokit/xeokit-sdk";
+
 import type { ViewerCore } from "../viewer/ViewerCore";
 
 export interface ProjectConfig {
@@ -20,11 +22,12 @@ export interface ProjectConfig {
 }
 
 export class ModelLoader {
-  // Stub: will be read when xeokit is integrated (Task 1)
   private _viewer: ViewerCore;
+  private _gltfLoader: GLTFLoaderPlugin;
 
   constructor(viewer: ViewerCore) {
     this._viewer = viewer;
+    this._gltfLoader = new GLTFLoaderPlugin(viewer.viewer);
   }
 
   /**
@@ -33,30 +36,43 @@ export class ModelLoader {
    */
   async loadProject(projectId: string): Promise<void> {
     const basePath = `./data/${projectId}`;
-    const metadataUrl = `${basePath}/metadata.json`;
     const modelUrl = `${basePath}/model.glb`;
+    const metadataUrl = `${basePath}/metadata.json`;
 
-    let metadata: Record<string, unknown> = {};
-    try {
-      const res = await fetch(metadataUrl);
-      if (res.ok) {
-        metadata = await res.json();
-      } else {
-        console.warn(`[ModelLoader] No metadata found at ${metadataUrl}`);
-      }
-    } catch {
-      console.warn(`[ModelLoader] Failed to fetch metadata for project "${projectId}"`);
-    }
+    const sceneModel = this._gltfLoader.load({
+      id: projectId,
+      src: modelUrl,
+      metaModelSrc: metadataUrl,
+      edges: true,
+    });
 
-    // TODO (Task 1): Load model via xeokit GLTFLoaderPlugin
-    // const gltfLoader = new GLTFLoaderPlugin(this.viewer.viewer);
-    // const model = gltfLoader.load({ id: projectId, src: modelUrl, metaModelSrc: metadataUrl });
-    console.info(`[ModelLoader] Loading project "${projectId}" from ${modelUrl}`, metadata);
+    return new Promise<void>((resolve, reject) => {
+      sceneModel.on("loaded", () => {
+        this._viewer.viewer.cameraFlight.flyTo(sceneModel);
+        console.info(`[ModelLoader] Project "${projectId}" loaded successfully.`);
+        resolve();
+      });
+
+      sceneModel.on("error", (msg: string) => {
+        console.error(`[ModelLoader] Failed to load project "${projectId}": ${msg}`);
+        // Show user-facing error
+        const panel = document.getElementById("properties-panel");
+        if (panel) {
+          panel.innerHTML = `<p class="error">Failed to load model: ${msg}</p>`;
+        }
+        reject(new Error(msg));
+      });
+    });
   }
 
   /** Unload all models from the scene */
   unloadAll(): void {
-    // TODO: this.viewer.viewer.scene.models.forEach(m => m.destroy());
+    const models = this._viewer.viewer.scene.models;
+    for (const id in models) {
+      if (Object.prototype.hasOwnProperty.call(models, id)) {
+        models[id].destroy();
+      }
+    }
     console.info("[ModelLoader] All models unloaded.");
   }
 }

@@ -20,7 +20,11 @@ async function init(): Promise<void> {
 
   // --- Model Loader ---
   const loader = new ModelLoader(viewer);
-  await loader.loadProject(projectId);
+  try {
+    await loader.loadProject(projectId);
+  } catch {
+    console.warn(`[CivilBIMViewer] Could not load project "${projectId}" — viewer is empty.`);
+  }
 
   // --- Annotations ---
   const annotations = new AnnotationService(viewer);
