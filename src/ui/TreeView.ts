@@ -43,9 +43,6 @@ export class TreeView {
 
     // Right-click context menu for isolate/hide/show
     this._initContextMenu(containerId);
-
-    // Arrow key navigation within tree
-    this._initArrowKeyNav(containerId);
   }
 
   /** Initialize right-click context menu on tree nodes */
@@ -123,80 +120,6 @@ export class TreeView {
 
     // Close menu on click elsewhere
     document.addEventListener("click", () => this._hideContextMenu());
-  }
-
-  /**
-   * Arrow-key navigation within the tree panel.
-   * Up/Down to move focus between nodes, Left to collapse parent,
-   * Right to expand current node, Enter/Space to select.
-   */
-  private _initArrowKeyNav(containerId: string): void {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    container.setAttribute("tabindex", "0");
-    container.setAttribute("role", "tree");
-
-    container.addEventListener("keydown", (e: KeyboardEvent) => {
-      const links = Array.from(container.querySelectorAll<HTMLElement>("a[data-treenodeid]"));
-      if (links.length === 0) return;
-
-      // Find the currently focused node
-      const focused = document.activeElement as HTMLElement | null;
-      let idx = focused ? links.indexOf(focused) : -1;
-
-      switch (e.key) {
-        case "ArrowDown":
-          e.preventDefault();
-          idx = idx < links.length - 1 ? idx + 1 : 0;
-          links[idx].focus();
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          idx = idx > 0 ? idx - 1 : links.length - 1;
-          links[idx].focus();
-          break;
-        case "ArrowRight":
-          // Expand: click the toggle (if tree node is collapsed)
-          if (focused) {
-            const li = focused.closest("li");
-            const toggle = li?.querySelector<HTMLElement>(".xeokit-toggle");
-            if (toggle && !li?.classList.contains("xeokit-open")) toggle.click();
-          }
-          break;
-        case "ArrowLeft":
-          // Collapse: click the toggle (if tree node is expanded)
-          if (focused) {
-            const li = focused.closest("li");
-            const toggle = li?.querySelector<HTMLElement>(".xeokit-toggle");
-            if (toggle && li?.classList.contains("xeokit-open")) {
-              toggle.click();
-            } else {
-              // Move to parent node
-              const parentLi = li?.parentElement?.closest("li");
-              const parentLink = parentLi?.querySelector<HTMLElement>("a[data-treenodeid]");
-              parentLink?.focus();
-            }
-          }
-          break;
-        case "Enter":
-        case " ":
-          // Select the focused node
-          e.preventDefault();
-          if (focused && focused.hasAttribute("data-treenodeid")) {
-            focused.click();
-          }
-          break;
-        case "Home":
-          e.preventDefault();
-          links[0]?.focus();
-          break;
-        case "End":
-          e.preventDefault();
-          links[links.length - 1]?.focus();
-          break;
-      }
-    });
   }
 
   private _hideContextMenu(): void {

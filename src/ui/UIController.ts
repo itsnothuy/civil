@@ -89,27 +89,6 @@ export class UIController {
       fileInput?.click();
     });
 
-    // High-contrast toggle (Task 3.2)
-    this._on("btn-high-contrast", () => {
-      const isHC = document.body.classList.toggle("high-contrast");
-      this._setPressed("btn-high-contrast", isHC);
-      try {
-        localStorage.setItem("civil-bim-high-contrast", isHC ? "1" : "0");
-      } catch {
-        /* localStorage unavailable */
-      }
-    });
-
-    // Restore high-contrast from localStorage
-    try {
-      if (localStorage.getItem("civil-bim-high-contrast") === "1") {
-        document.body.classList.add("high-contrast");
-        this._setPressed("btn-high-contrast", true);
-      }
-    } catch {
-      /* localStorage unavailable */
-    }
-
     const fileInput = document.getElementById("import-file-input") as HTMLInputElement | null;
     if (fileInput) {
       fileInput.addEventListener("change", () => {
@@ -331,30 +310,13 @@ export class UIController {
           break;
         case "m":
         case "M":
-          // M: toggle measurement
+          // M: toggle measurement (placeholder — Task 2.1)
           document.getElementById("btn-measure")?.click();
           break;
         case "a":
         case "A":
-          // A: toggle annotation
+          // A: toggle annotation (placeholder — Task 2.3)
           document.getElementById("btn-annotate")?.click();
-          break;
-        case "h":
-        case "H":
-          // H: toggle high-contrast
-          document.getElementById("btn-high-contrast")?.click();
-          break;
-        case "f":
-        case "F":
-          // F: focus filter panel
-          {
-            const filterContainer = document.getElementById("filter-container");
-            if (filterContainer) {
-              const firstCheckbox =
-                filterContainer.querySelector<HTMLInputElement>("input[type=checkbox]");
-              firstCheckbox?.focus();
-            }
-          }
           break;
         case "z":
         case "Z":

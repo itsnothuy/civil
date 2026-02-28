@@ -41,13 +41,13 @@ async function init(): Promise<void> {
   // --- Annotation overlay (3D markers) ---
   const annotationOverlay = new AnnotationOverlay(viewer, annotations, projectId);
 
-  // --- Layer/discipline filtering ---
-  const filterPanel = new FilterPanel(viewer, "filter-container");
-  filterPanel.init();
-
   // --- UI wiring ---
   const ui = new UIController(viewer, annotations, projectId, measurementTool, annotationOverlay);
   ui.init();
+
+  // --- Layer/discipline filter panel ---
+  const filterPanel = new FilterPanel(viewer, "filter-panel");
+  filterPanel.init();
 
   // --- Model tree (left panel) ---
   const _treeView = new TreeView(viewer, "tree-view");
