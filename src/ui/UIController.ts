@@ -81,6 +81,11 @@ export class UIController {
     // Measurement tool toggle (Task 2.1)
     this._on("btn-measure", () => {
       if (!this._measurementTool) return;
+      // Deactivate path mode first
+      if (this._measurementTool.pathMode) {
+        this._measurementTool.clearPath();
+        this._setPressed("btn-path-measure", false);
+      }
       const btn = document.getElementById("btn-measure");
       if (this._measurementTool.isActive) {
         this._measurementTool.deactivate();
@@ -88,6 +93,23 @@ export class UIController {
       } else {
         this._measurementTool.activate();
         btn?.setAttribute("aria-pressed", "true");
+      }
+    });
+
+    // Path measurement toggle (Task 2.2)
+    this._on("btn-path-measure", () => {
+      if (!this._measurementTool) return;
+      // Deactivate two-point mode first
+      if (this._measurementTool.isActive) {
+        this._measurementTool.deactivate();
+        this._setPressed("btn-measure", false);
+      }
+      if (this._measurementTool.pathMode) {
+        this._measurementTool.endPath();
+        this._setPressed("btn-path-measure", false);
+      } else {
+        this._measurementTool.startPath();
+        this._setPressed("btn-path-measure", true);
       }
     });
   }
@@ -211,11 +233,15 @@ export class UIController {
           this.viewer.cycleSelection(e.shiftKey ? "prev" : "next");
           break;
         case "Escape":
-          // Escape: deselect all, cancel measurement, close panels
+          // Escape: deselect all, cancel measurement/path, close panels
           this.viewer.selectEntity(null);
           if (this._measurementTool?.isActive) {
             this._measurementTool.deactivate();
             document.getElementById("btn-measure")?.setAttribute("aria-pressed", "false");
+          }
+          if (this._measurementTool?.pathMode) {
+            this._measurementTool.endPath();
+            document.getElementById("btn-path-measure")?.setAttribute("aria-pressed", "false");
           }
           break;
         case "m":
@@ -227,6 +253,14 @@ export class UIController {
         case "A":
           // A: toggle annotation (placeholder — Task 2.3)
           document.getElementById("btn-annotate")?.click();
+          break;
+        case "z":
+        case "Z":
+          // Ctrl+Z / Cmd+Z: undo last path point
+          if ((e.ctrlKey || e.metaKey) && this._measurementTool?.pathMode) {
+            e.preventDefault();
+            this._measurementTool.undoLastPoint();
+          }
           break;
         case "x":
         case "X":

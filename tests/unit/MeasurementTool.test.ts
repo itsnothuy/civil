@@ -11,6 +11,8 @@
 const mockPluginOn = jest.fn();
 const mockPluginClear = jest.fn();
 const mockPluginDestroy = jest.fn();
+const mockPluginCreateMeasurement = jest.fn();
+const mockPluginDestroyMeasurement = jest.fn();
 
 const mockControlActivate = jest.fn();
 const mockControlDeactivate = jest.fn();
@@ -18,11 +20,23 @@ const mockControlDestroy = jest.fn();
 
 const mockLensDestroy = jest.fn();
 
+// Capture cameraControl event handlers
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const cameraControlHandlers: Record<string, (...args: any[]) => void> = {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockCameraControlOn = jest.fn((event: string, cb: (...args: any[]) => void) => {
+  cameraControlHandlers[event] = cb;
+  return `sub-${event}`;
+});
+const mockCameraControlOff = jest.fn();
+
 jest.mock("@xeokit/xeokit-sdk", () => ({
   DistanceMeasurementsPlugin: jest.fn().mockImplementation(() => ({
     on: mockPluginOn,
     clear: mockPluginClear,
     destroy: mockPluginDestroy,
+    createMeasurement: mockPluginCreateMeasurement,
+    destroyMeasurement: mockPluginDestroyMeasurement,
   })),
   DistanceMeasurementsMouseControl: jest.fn().mockImplementation(() => ({
     activate: mockControlActivate,
@@ -42,7 +56,14 @@ import type { ViewerCore } from "../../src/viewer/ViewerCore";
 
 /** Create a minimal ViewerCore mock */
 function mockViewerCore(): ViewerCore {
-  return { viewer: {} } as unknown as ViewerCore;
+  return {
+    viewer: {
+      cameraControl: {
+        on: mockCameraControlOn,
+        off: mockCameraControlOff,
+      },
+    },
+  } as unknown as ViewerCore;
 }
 
 /** Retrieve the "measurementCreated" callback registered on the plugin */
@@ -72,6 +93,10 @@ describe("MeasurementTool", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset cameraControl handlers
+    for (const key of Object.keys(cameraControlHandlers)) {
+      delete cameraControlHandlers[key];
+    }
     tool = new MeasurementTool(mockViewerCore());
   });
 
@@ -184,10 +209,10 @@ describe("MeasurementTool", () => {
     fire(fakeMeasurement("m5", [0, 0, 0], [10, 0, 0]));
 
     const json = JSON.parse(tool.exportJSON());
-    expect(json).toHaveLength(1);
-    expect(json[0].id).toBe("m5");
-    expect(json[0].displayDistance).toBe("10.00 m");
-    expect(json[0].unit).toBe("m");
+    expect(json.measurements).toHaveLength(1);
+    expect(json.measurements[0].id).toBe("m5");
+    expect(json.measurements[0].displayDistance).toBe("10.00 m");
+    expect(json.measurements[0].unit).toBe("m");
   });
 
   it("exports with feet when unit is set", () => {
@@ -196,8 +221,8 @@ describe("MeasurementTool", () => {
     tool.setUnit("ft");
 
     const json = JSON.parse(tool.exportJSON());
-    expect(json[0].unit).toBe("ft");
-    expect(json[0].displayDistance).toContain("ft");
+    expect(json.measurements[0].unit).toBe("ft");
+    expect(json.measurements[0].displayDistance).toContain("ft");
   });
 
   // ---------- Clear ----------
@@ -221,5 +246,140 @@ describe("MeasurementTool", () => {
     expect(mockPluginDestroy).toHaveBeenCalledTimes(1);
     expect(mockLensDestroy).toHaveBeenCalledTimes(1);
     expect(tool.count).toBe(0);
+  });
+
+  // ---------- Path Measurement (Task 2.2) ----------
+
+  describe("path mode", () => {
+    /** Simulate picking a point in path mode */
+    function pickPoint(worldPos: [number, number, number], entity: unknown = {}) {
+      cameraControlHandlers["picked"]?.({ worldPos, entity });
+    }
+
+    it("starts with pathMode = false", () => {
+      expect(tool.pathMode).toBe(false);
+      expect(tool.currentPath).toBeNull();
+    });
+
+    it("enters path mode via startPath()", () => {
+      tool.startPath();
+      expect(tool.pathMode).toBe(true);
+      expect(mockCameraControlOn).toHaveBeenCalledWith("picked", expect.any(Function));
+    });
+
+    it("deactivates two-point mode when starting path", () => {
+      tool.activate();
+      expect(tool.isActive).toBe(true);
+      tool.startPath();
+      expect(tool.isActive).toBe(false);
+      expect(tool.pathMode).toBe(true);
+    });
+
+    it("adds points and creates segments between them", () => {
+      tool.startPath();
+      pickPoint([0, 0, 0]);
+      expect(tool.currentPath?.points).toHaveLength(1);
+      expect(tool.currentPath?.segments).toHaveLength(0);
+
+      pickPoint([3, 4, 0]);
+      expect(tool.currentPath?.points).toHaveLength(2);
+      expect(tool.currentPath?.segments).toHaveLength(1);
+      expect(mockPluginCreateMeasurement).toHaveBeenCalledTimes(1);
+
+      pickPoint([3, 4, 5]);
+      expect(tool.currentPath?.points).toHaveLength(3);
+      expect(tool.currentPath?.segments).toHaveLength(2);
+      expect(mockPluginCreateMeasurement).toHaveBeenCalledTimes(2);
+    });
+
+    it("computes cumulative path distance", () => {
+      tool.startPath();
+      pickPoint([0, 0, 0]);
+      pickPoint([3, 4, 0]); // distance = 5
+      pickPoint([3, 4, 12]); // distance = 12
+
+      const path = tool.currentPath!;
+      expect(path.segments[0].distance).toBeCloseTo(5, 6);
+      expect(path.segments[1].distance).toBeCloseTo(12, 6);
+      expect(path.totalDistance).toBeCloseTo(17, 6);
+    });
+
+    it("undoLastPoint removes the last segment", () => {
+      tool.startPath();
+      pickPoint([0, 0, 0]);
+      pickPoint([3, 4, 0]);
+      pickPoint([3, 4, 12]);
+      expect(tool.currentPath?.segments).toHaveLength(2);
+
+      tool.undoLastPoint();
+      expect(tool.currentPath?.segments).toHaveLength(1);
+      expect(tool.currentPath?.points).toHaveLength(2);
+      expect(mockPluginDestroyMeasurement).toHaveBeenCalledTimes(1);
+    });
+
+    it("undoLastPoint does nothing on empty path", () => {
+      tool.startPath();
+      tool.undoLastPoint(); // should not throw
+      expect(tool.currentPath).toBeNull();
+    });
+
+    it("endPath returns data and exits path mode", () => {
+      tool.startPath();
+      pickPoint([0, 0, 0]);
+      pickPoint([10, 0, 0]);
+
+      const result = tool.endPath();
+      expect(result).not.toBeNull();
+      expect(result!.totalDistance).toBeCloseTo(10, 6);
+      expect(result!.segments).toHaveLength(1);
+      expect(tool.pathMode).toBe(false);
+    });
+
+    it("clearPath removes all segments and exits path mode", () => {
+      tool.startPath();
+      pickPoint([0, 0, 0]);
+      pickPoint([1, 0, 0]);
+      pickPoint([2, 0, 0]);
+
+      tool.clearPath();
+      expect(tool.pathMode).toBe(false);
+      expect(tool.currentPath).toBeNull();
+      expect(mockPluginDestroyMeasurement).toHaveBeenCalledTimes(2);
+    });
+
+    it("fires onPathChange listeners when points are added", () => {
+      const cb = jest.fn();
+      tool.onPathChange(cb);
+      tool.startPath();
+
+      pickPoint([0, 0, 0]);
+      // With 1 point, currentPath has 0 segments but still fires
+      // Actually _firePathChange only fires if currentPath is not null
+      expect(cb).toHaveBeenCalledTimes(1);
+
+      pickPoint([5, 0, 0]);
+      expect(cb).toHaveBeenCalledTimes(2);
+    });
+
+    it("unsubscribes onPathChange correctly", () => {
+      const cb = jest.fn();
+      const unsub = tool.onPathChange(cb);
+      unsub();
+
+      tool.startPath();
+      pickPoint([0, 0, 0]);
+      expect(cb).not.toHaveBeenCalled();
+    });
+
+    it("export includes path data", () => {
+      tool.startPath();
+      pickPoint([0, 0, 0]);
+      pickPoint([10, 0, 0]);
+
+      const exported = JSON.parse(tool.exportJSON());
+      expect(exported.path).toBeDefined();
+      expect(exported.path.totalDistance).toBeCloseTo(10, 6);
+      expect(exported.path.displayTotalDistance).toContain("m");
+    });
   });
 });
