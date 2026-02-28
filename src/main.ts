@@ -12,6 +12,7 @@ import { AnnotationService } from "./annotations/AnnotationService";
 import { UIController } from "./ui/UIController";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { TreeView } from "./ui/TreeView";
+import { MeasurementTool } from "./tools/MeasurementTool";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -32,8 +33,11 @@ async function init(): Promise<void> {
   const annotations = new AnnotationService(viewer);
   annotations.loadFromLocalStorage(projectId);
 
+  // --- Measurement tool ---
+  const measurementTool = new MeasurementTool(viewer);
+
   // --- UI wiring ---
-  const ui = new UIController(viewer, annotations);
+  const ui = new UIController(viewer, annotations, measurementTool);
   ui.init();
 
   // --- Model tree (left panel) ---

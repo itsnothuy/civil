@@ -8,17 +8,24 @@
 
 import type { ViewerCore } from "../viewer/ViewerCore";
 import type { AnnotationService } from "../annotations/AnnotationService";
+import type { MeasurementTool } from "../tools/MeasurementTool";
 
 export class UIController {
   private viewer: ViewerCore;
   private annotations: AnnotationService;
+  private _measurementTool: MeasurementTool | null;
 
   private _activeSectionPlanes: string[] = [];
   private _sectionListCleanup: (() => void) | null = null;
 
-  constructor(viewer: ViewerCore, annotations: AnnotationService) {
+  constructor(
+    viewer: ViewerCore,
+    annotations: AnnotationService,
+    measurementTool?: MeasurementTool,
+  ) {
     this.viewer = viewer;
     this.annotations = annotations;
+    this._measurementTool = measurementTool ?? null;
   }
 
   /** Initialize all UI bindings */
@@ -69,8 +76,20 @@ export class UIController {
       URL.revokeObjectURL(url);
     });
 
-    // TODO (Task 8): bind btn-measure to MeasurementTool
     // TODO (Task 8): bind btn-annotate to annotation creation flow
+
+    // Measurement tool toggle (Task 2.1)
+    this._on("btn-measure", () => {
+      if (!this._measurementTool) return;
+      const btn = document.getElementById("btn-measure");
+      if (this._measurementTool.isActive) {
+        this._measurementTool.deactivate();
+        btn?.setAttribute("aria-pressed", "false");
+      } else {
+        this._measurementTool.activate();
+        btn?.setAttribute("aria-pressed", "true");
+      }
+    });
   }
 
   /** Update the section-plane list in the toolbar area (uses event delegation to avoid listener leaks) */
@@ -192,8 +211,12 @@ export class UIController {
           this.viewer.cycleSelection(e.shiftKey ? "prev" : "next");
           break;
         case "Escape":
-          // Escape: deselect all, close panels
+          // Escape: deselect all, cancel measurement, close panels
           this.viewer.selectEntity(null);
+          if (this._measurementTool?.isActive) {
+            this._measurementTool.deactivate();
+            document.getElementById("btn-measure")?.setAttribute("aria-pressed", "false");
+          }
           break;
         case "m":
         case "M":
