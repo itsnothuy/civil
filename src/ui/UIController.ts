@@ -16,6 +16,7 @@ export class UIController {
   private annotations: AnnotationService;
   private _measurementTool: MeasurementTool | null;
   private _annotationOverlay: AnnotationOverlay | null;
+  private _projectId: string;
 
   private _activeSectionPlanes: string[] = [];
   private _sectionListCleanup: (() => void) | null = null;
@@ -23,11 +24,13 @@ export class UIController {
   constructor(
     viewer: ViewerCore,
     annotations: AnnotationService,
+    projectId?: string,
     measurementTool?: MeasurementTool,
     annotationOverlay?: AnnotationOverlay,
   ) {
     this.viewer = viewer;
     this.annotations = annotations;
+    this._projectId = projectId ?? "sample";
     this._measurementTool = measurementTool ?? null;
     this._annotationOverlay = annotationOverlay ?? null;
   }
@@ -79,6 +82,37 @@ export class UIController {
       a.click();
       URL.revokeObjectURL(url);
     });
+
+    // JSON Import (Task 2.4)
+    this._on("btn-import-json", () => {
+      const fileInput = document.getElementById("import-file-input") as HTMLInputElement | null;
+      fileInput?.click();
+    });
+
+    const fileInput = document.getElementById("import-file-input") as HTMLInputElement | null;
+    if (fileInput) {
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const text = reader.result as string;
+            const count = this.annotations.importJSON(this._projectId, text);
+            this._annotationOverlay?.refresh();
+            console.info(`[UIController] Imported ${count} annotation(s) from "${file.name}".`);
+            this._showToast(`Imported ${count} annotation(s).`, "success");
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Unknown error";
+            console.error(`[UIController] Import failed: ${msg}`);
+            this._showToast(`Import failed: ${msg}`, "error");
+          }
+          // Reset input so same file can be re-imported
+          fileInput.value = "";
+        };
+        reader.readAsText(file);
+      });
+    }
 
     // TODO (Task 8): bind btn-annotate to annotation creation flow
 
@@ -307,5 +341,19 @@ export class UIController {
 
   private _setPressed(id: string, pressed: boolean): void {
     document.getElementById(id)?.setAttribute("aria-pressed", String(pressed));
+  }
+
+  /** Show a brief toast notification */
+  private _showToast(message: string, type: "success" | "error" = "success"): void {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      toast.remove();
+    }, 4000);
   }
 }

@@ -122,6 +122,78 @@ export class AnnotationService {
     return JSON.stringify(this.list(), null, 2);
   }
 
+  /**
+   * Import annotations from a JSON string.
+   * Validates schema version and required fields.
+   * Returns the number of annotations imported.
+   * Throws on invalid JSON or schema mismatch.
+   */
+  importJSON(projectId: string, jsonString: string): number {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch {
+      throw new Error("Invalid JSON: unable to parse input.");
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new Error("Invalid format: expected a JSON array of annotations.");
+    }
+
+    const validAnnotations: Annotation[] = [];
+    for (let i = 0; i < parsed.length; i++) {
+      const item = parsed[i] as Record<string, unknown>;
+      const errors = this._validateAnnotation(item, i);
+      if (errors.length > 0) {
+        throw new Error(`Annotation at index ${i} is invalid: ${errors.join("; ")}`);
+      }
+      validAnnotations.push(item as unknown as Annotation);
+    }
+
+    // Merge into existing annotations (overwrite duplicates by id)
+    for (const ann of validAnnotations) {
+      this.annotations.set(ann.id, ann);
+    }
+    this._persist(projectId);
+    console.info(`[AnnotationService] Imported ${validAnnotations.length} annotation(s).`);
+    return validAnnotations.length;
+  }
+
+  /** Validate a single annotation object. Returns array of error messages (empty = valid). */
+  private _validateAnnotation(item: Record<string, unknown>, index: number): string[] {
+    const errors: string[] = [];
+    if (typeof item !== "object" || item === null) {
+      return [`item ${index} is not an object`];
+    }
+    if (item.schemaVersion !== "1.0") {
+      errors.push(`unsupported schemaVersion "${String(item.schemaVersion)}" (expected "1.0")`);
+    }
+    const requiredStrings = [
+      "id",
+      "type",
+      "author",
+      "createdAt",
+      "updatedAt",
+      "comment",
+      "severity",
+      "status",
+    ];
+    for (const field of requiredStrings) {
+      if (typeof item[field] !== "string") {
+        errors.push(`missing or invalid field "${field}"`);
+      }
+    }
+    if (typeof item.anchor !== "object" || item.anchor === null) {
+      errors.push('missing or invalid field "anchor"');
+    } else {
+      const anchor = item.anchor as Record<string, unknown>;
+      if (!Array.isArray(anchor.worldPos) || anchor.worldPos.length !== 3) {
+        errors.push("anchor.worldPos must be a [number, number, number] array");
+      }
+    }
+    return errors;
+  }
+
   // TODO (V1): importBCF(zip: Blob): Promise<void>
   // TODO (V1): exportBCF(): Promise<Blob>
 }

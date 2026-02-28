@@ -41,7 +41,7 @@ async function init(): Promise<void> {
   const annotationOverlay = new AnnotationOverlay(viewer, annotations, projectId);
 
   // --- UI wiring ---
-  const ui = new UIController(viewer, annotations, measurementTool, annotationOverlay);
+  const ui = new UIController(viewer, annotations, projectId, measurementTool, annotationOverlay);
   ui.init();
 
   // --- Model tree (left panel) ---
