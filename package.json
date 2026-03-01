@@ -20,6 +20,7 @@
     "test:coverage": "jest --coverage --passWithNoTests",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:perf": "playwright test tests/performance/benchmark.spec.ts --project=chromium",
     "convert": "node scripts/convert-ifc.mjs",
     "typecheck": "tsc --noEmit"
   },
