@@ -3,7 +3,7 @@
 > **For:** Claude Opus 4.6 in GitHub Copilot (VS Code Agent Mode)  
 > **Purpose:** Act as a senior full-stack software engineer to implement the Civil BIM Viewer phase-by-phase until 100% functional  
 > **Companion doc:** `docs/reports/completion-plan-2026-03-01.md` (task definitions, AC, dependencies)  
-> **Last updated:** 2026-03-01 (Phase 1 complete; updated post-validation)
+> **Last updated:** 2026-03-22 (Phases 1-3 complete; ready for Phase 4)
 
 ---
 
@@ -49,6 +49,7 @@ npm run format:check # Prettier check
 npm run test         # Jest unit tests
 npm run test:coverage # Jest + coverage report
 npm run test:e2e     # Playwright E2E
+npm run test:perf    # Playwright performance benchmarks (CDP)
 npm run typecheck    # tsc --noEmit
 npm run convert      # IFC→GLB conversion (scripts/convert-ifc.mjs)
 ```
@@ -65,18 +66,25 @@ npm run format:check && npm run lint && npm run typecheck && npm run test && npm
 ```
 civil/
 ├── src/
-│   ├── main.ts                              # ✅ Entry point — bootstraps all modules
-│   ├── index.html                           # ✅ ARIA toolbar, canvas, panels, search
-│   ├── viewer/ViewerCore.ts                 # ✅ DONE — xeokit Viewer, selection, section planes, modes
-│   ├── loader/ModelLoader.ts                # ✅ DONE — GLTFLoaderPlugin, Promise-based load
-│   ├── ui/UIController.ts                   # ✅ DONE — toolbar, search, sections, keyboard nav
-│   ├── ui/PropertiesPanel.ts                # ✅ DONE — IFC metadata display (XSS-safe)
-│   ├── ui/TreeView.ts                       # ✅ DONE — TreeViewPlugin wrapper + context menu
-│   ├── annotations/AnnotationService.ts     # ✅ DONE — CRUD, localStorage, JSON export
-│   └── styles/main.css                      # ✅ DONE — layout, colors, high-contrast, context menu
+│   ├── main.ts                              # ✅ Entry — bootstraps ViewerCore, ModelLoader, FilterPanel, all UI
+│   ├── index.html                           # ✅ ARIA toolbar (10 buttons), canvas, sidebar, filter panel, skip-link
+│   ├── viewer/ViewerCore.ts                 # ✅ DONE — xeokit Viewer, selection, section planes, modes (304 lines)
+│   ├── loader/ModelLoader.ts                # ✅ DONE — GLTFLoaderPlugin, Promise-based load (72 lines)
+│   ├── ui/UIController.ts                   # ✅ DONE — toolbar, search, keyboard (H/F/?/M/A/X/Tab/Esc), high-contrast, toast (442 lines)
+│   ├── ui/PropertiesPanel.ts                # ✅ DONE — IFC metadata display (XSS-safe) (71 lines)
+│   ├── ui/TreeView.ts                       # ✅ DONE — TreeViewPlugin wrapper + context menu (161 lines)
+│   ├── ui/FilterPanel.ts                    # ✅ DONE — layer/discipline filtering, X-ray toggle, Show/Hide All (312 lines)
+│   ├── tools/MeasurementTool.ts             # ✅ DONE — two-point + path measurement, snap, m/ft, export (371 lines)
+│   ├── annotations/AnnotationOverlay.ts     # ✅ DONE — 3D markers via AnnotationsPlugin, inline form (242 lines)
+│   ├── annotations/AnnotationService.ts     # ✅ DONE — CRUD, localStorage, JSON export/import (199 lines)
+│   └── styles/main.css                      # ✅ DONE — layout, high-contrast, filter, skip-link, help overlay (586 lines)
 ├── tests/
-│   ├── unit/AnnotationService.test.ts       # ✅ 8/8 passing (94% coverage)
-│   └── e2e/viewer.spec.ts                   # ◐ PARTIAL — smoke tests only
+│   ├── unit/AnnotationService.test.ts       # ✅ 8/8 passing
+│   ├── unit/MeasurementTool.test.ts         # ✅ 27/27 passing (~98% coverage)
+│   ├── unit/AnnotationOverlay.test.ts       # ✅ 12/12 passing (~93% coverage)
+│   ├── unit/ImportExport.test.ts            # ✅ 11/11 passing
+│   ├── e2e/viewer.spec.ts                   # ◐ PARTIAL — 5 smoke tests
+│   └── performance/benchmark.spec.ts        # ✅ DONE — Playwright + CDP load/FPS/heap (193 lines)
 ├── scripts/convert-ifc.mjs                  # ✅ Ready (needs ifcconvert on PATH)
 ├── data/sample-models/                      # ★ EMPTY — no models converted yet
 ├── .github/workflows/
@@ -84,10 +92,10 @@ civil/
 │   ├── deploy.yml                           # ◐ Configured, never deployed
 │   └── cla.yml                              # ✅ CLA Assistant
 ├── docs/
-│   ├── prompts/                             # Execution & validation prompts
-│   ├── reports/                             # Completion plan, validation reports
+│   ├── prompts/                             # Execution & validation prompts (Phase 3-7)
+│   ├── reports/                             # Completion plan + validation reports (Phase 1, 2)
 │   └── review/                              # Architecture, backlog docs
-├── package.json                             # Dependencies + scripts
+├── package.json                             # Dependencies + scripts (incl. test:perf)
 ├── tsconfig.json                            # ES2022, strict, bundler resolution
 ├── vite.config.ts                           # root: src, base: ./, outDir: ../dist
 ├── jest.config.js                           # ts-jest, jsdom, coverage thresholds
@@ -193,13 +201,17 @@ export class ModelLoader {
 }
 ```
 
-### `src/ui/UIController.ts` — ✅ DONE (222 lines)
+### `src/ui/UIController.ts` — ✅ DONE (442 lines)
 
-**Key changes from stub:**
-- Constructor takes `(viewer: ViewerCore, annotations: AnnotationService)` — **no ModelLoader param**
-- `_bindSearch()`: X-rays non-matching, highlights matching, **clears highlights on empty query**
+**Key changes from stub (Phases 1→2→3):**
+- Constructor: `(viewer: ViewerCore, annotations: AnnotationService, projectId?: string, measurementTool?: MeasurementTool, annotationOverlay?: AnnotationOverlay)` — 5 params
+- `_bindSearch()`: X-rays non-matching, highlights matching, clears on empty query
 - `_updateSectionList()`: Uses **event delegation** (single listener) to avoid leaks
-- `_bindKeyboard()`: Handles Tab (cycle), Escape (deselect), M/A/X shortcuts
+- `_bindKeyboard()`: Tab (cycle), Escape (deselect), M (measure), A (annotate), X (camera), H (high-contrast), F (search focus), ? (help overlay)
+- Mutual exclusion between measurement and annotation modes
+- `_showToast()`: temporary status notifications with `aria-live="polite"`
+- `_restoreHighContrast()`: restores high-contrast preference from localStorage on init
+- `_showKeyboardHelp()`: renders keyboard help overlay, dismissible via Escape or X button
 - `addSectionPlane()` returns `string | null` — UIController checks for null
 
 ### `src/ui/PropertiesPanel.ts` — ✅ DONE (69 lines)
@@ -212,51 +224,35 @@ All dynamic IFC metadata is **HTML-escaped** via `escapeHtml()` to prevent XSS.
 - Right-click context menu: Isolate / Hide / Show All
 - `destroy()` removes the context menu DOM element
 
-### `src/main.ts` — ✅ DONE (59 lines)
+### `src/main.ts` — ✅ DONE (71 lines)
 
+Bootstraps all modules including Phase 2/3 additions:
 ```typescript
 import { ViewerCore } from "./viewer/ViewerCore";
 import { ModelLoader } from "./loader/ModelLoader";
 import { AnnotationService } from "./annotations/AnnotationService";
+import { MeasurementTool } from "./tools/MeasurementTool";
+import { AnnotationOverlay } from "./annotations/AnnotationOverlay";
 import { UIController } from "./ui/UIController";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { TreeView } from "./ui/TreeView";
+import { FilterPanel } from "./ui/FilterPanel";
 
-async function init(): Promise<void> {
-  const params = new URLSearchParams(window.location.search);
-  const projectId = params.get("projectId") ?? "sample";
+// Key wiring (simplified):
+const viewer = new ViewerCore("viewer-canvas");
+const loader = new ModelLoader(viewer);
+await loader.loadProject(projectId);
 
-  const viewer = new ViewerCore("viewer-canvas");
-  const loader = new ModelLoader(viewer);
-  try {
-    await loader.loadProject(projectId);
-  } catch {
-    console.warn(`[CivilBIMViewer] Could not load project "${projectId}" — viewer is empty.`);
-  }
+const annotations = new AnnotationService(viewer);
+const measurementTool = new MeasurementTool(viewer);
+const annotationOverlay = new AnnotationOverlay(viewer, annotations);
 
-  const annotations = new AnnotationService(viewer);
-  annotations.loadFromLocalStorage(projectId);
+// UIController now takes 5 params:
+const ui = new UIController(viewer, annotations, projectId, measurementTool, annotationOverlay);
+ui.init();
 
-  // UIController takes (viewer, annotations) — no loader param
-  const ui = new UIController(viewer, annotations);
-  ui.init();
-
-  const _treeView = new TreeView(viewer, "tree-view");
-  const propertiesPanel = new PropertiesPanel(viewer);
-
-  viewer.onSelect((entityId) => {
-    if (entityId) {
-      propertiesPanel.show(entityId);
-      _treeView.showNode(entityId);
-    } else {
-      propertiesPanel.hide();
-    }
-  });
-}
-
-init().catch((err) => {
-  console.error("[CivilBIMViewer] Initialization failed:", err);
-});
+const filterPanel = new FilterPanel(viewer);
+filterPanel.init();
 ```
 
 ### `src/index.html` — ✅ DONE (56 lines)
@@ -452,7 +448,7 @@ viewer.scene.highlightMaterial.edgeColor = [1, 1, 0];
 ### TypeScript
 - Strict mode (`"strict": true` in tsconfig.json)
 - ES2022 target, ESNext modules, bundler resolution
-- Path alias: `@/*` → `src/*`
+- No path aliases (use relative imports — `@/*` is NOT configured)
 - No unused locals/parameters warnings (disabled for stubs)
 - All public APIs must have JSDoc comments
 
@@ -553,135 +549,134 @@ For each phase in the completion plan:
 
 ---
 
-### PHASE 2: Measurements & Tools (Start Here)
+### PHASE 2: Measurements & Tools — ✅ COMPLETE
 
-#### Task 2.1 — Distance Measurement Tool
-
-**New file:** `src/tools/MeasurementTool.ts`
-
-```typescript
-import {
-  DistanceMeasurementsPlugin,
-  DistanceMeasurementsMouseControl,
-  PointerLens,
-} from "@xeokit/xeokit-sdk";
-import type { ViewerCore } from "../viewer/ViewerCore";
-
-export type MeasurementUnit = "m" | "ft";
-
-export class MeasurementTool {
-  private _distPlugin: DistanceMeasurementsPlugin;
-  private _mouseControl: DistanceMeasurementsMouseControl;
-  private _pointerLens: PointerLens;
-  private _unit: MeasurementUnit = "m";
-  private _active = false;
-
-  constructor(viewerCore: ViewerCore) {
-    const viewer = viewerCore.viewer;
-    this._distPlugin = new DistanceMeasurementsPlugin(viewer, {
-      defaultColor: "#00BBFF",
-    });
-    this._pointerLens = new PointerLens(viewer);
-    this._mouseControl = new DistanceMeasurementsMouseControl(this._distPlugin, {
-      pointerLens: this._pointerLens,
-    });
-    this._mouseControl.snapping = true;
-  }
-
-  activate(): void {
-    this._mouseControl.activate();
-    this._active = true;
-  }
-
-  deactivate(): void {
-    this._mouseControl.deactivate();
-    this._active = false;
-  }
-
-  get isActive(): boolean { return this._active; }
-
-  setUnit(unit: MeasurementUnit): void { this._unit = unit; }
-
-  clearAll(): void { this._distPlugin.clear(); }
-
-  destroy(): void {
-    this._mouseControl.destroy();
-    this._distPlugin.destroy();
-    this._pointerLens.destroy();
-  }
-}
-```
-
-**Wire to UIController:** `btn-measure` toggles `measurementTool.activate()` / `.deactivate()`.
-
-#### Task 2.3 — 3D Annotation Overlays
-
-**New file:** `src/annotations/AnnotationOverlay.ts`
-
-Use xeokit's `AnnotationsPlugin` or custom HTML overlays pinned to world coordinates via `viewer.scene.canvas.canvas2WorldPos()`.
+> **Status:** All 4 tasks implemented and validated. See `docs/reports/validation-report-2026-03-01-phase2.md`.
+> 58 tests passing post-Phase 2. Coverage: ~37% stmts.
+>
+> **Key implementation details (for Phase 4+ reference):**
+> - `MeasurementTool.ts` (371 lines): `DistanceMeasurementsPlugin` + `PointerLens` + `DistanceMeasurementsMouseControl` with snapping. Path mode uses `cameraControl.on("picked")` to collect points. Orange segments (#FF6600) for path, blue (#00BBFF) for two-point.
+> - `AnnotationOverlay.ts` (242 lines): `AnnotationsPlugin` with 📌 emoji markers. `markerClicked` toggles labels. Inline creation form (comment + severity). No edit UI (deferred).
+> - UIController wires `btn-measure`, `btn-path-measure`, `btn-annotate`, `btn-import-json` with mutual exclusion.
+> - `Ctrl+Z`/`Cmd+Z` undoes last path point.
+> - Toast notifications via `_showToast()` for import success/error.
+> - Tests: `MeasurementTool.test.ts` (27), `AnnotationOverlay.test.ts` (12), `ImportExport.test.ts` (11)
 
 ---
 
-### PHASE 3: Civil Features & Accessibility
+### PHASE 3: Civil Features & Accessibility — ✅ COMPLETE
 
-#### Task 3.1 — Layer/Discipline Filtering
-
-**New file:** `src/ui/FilterPanel.ts`
-
-Read `viewer.metaScene.metaObjects` to extract unique `type` values (IfcWall, IfcBeam, IfcColumn, etc.). Group by discipline. Toggle visibility via `viewer.scene.setObjectsVisible()`.
-
-#### Task 3.2 — High-Contrast Toggle
-
-Add button in toolbar. Toggle `document.body.classList.toggle("high-contrast")`. Persist in localStorage. The CSS is already set up.
-
-#### Task 3.3 — Keyboard Navigation
-
-Add keyboard event listeners:
-- `Tab` / `Shift+Tab`: cycle focusable elements
-- `Escape`: close panels, cancel measurement mode
-- `M`: toggle measurement
-- `A`: toggle annotation mode
-- Arrow keys in tree view
-- Visible focus indicators (already in CSS with `:focus-visible`)
+> **Status:** All 4 tasks implemented. 62 tests total. Build: 1,164 kB JS.
+>
+> **Key implementation details (for Phase 4+ reference):**
+> - `FilterPanel.ts` (312 lines): `DISCIPLINE_MAP` maps 80+ IFC types → 6 disciplines. `init()` builds groups from `viewer.metaScene.metaObjects`. Checkboxes toggle `setObjectsVisible()`. X-ray toggle for hidden objects. Show/Hide All buttons.
+> - High-contrast: `.high-contrast` class on `<body>`, `btn-high-contrast` button, localStorage persist + restore on load.
+> - Keyboard: H (contrast), F (search focus), ? (help overlay with all shortcuts), skip-to-content link, canvas `tabindex="0"`.
+> - Performance: `tests/performance/benchmark.spec.ts` — Playwright + CDP measuring `domcontentloaded`, `Performance.getMetrics()` for heap, `beginFrame`/`endFrame` for FPS. CI thresholds: load <5s, FPS ≥30, heap <500 MB.
+> - `npm run test:perf` script added to package.json.
+>
+> **Known gaps carried forward:**
+> - No unit tests for FilterPanel or UIController keyboard additions (→ Phase 4.1)
+> - No automated axe/Lighthouse audit (→ Phase 4.3)
+> - Annotation edit UI still missing (→ Phase 4 or 5)
 
 ---
 
-### PHASE 4: Testing & Release
+### PHASE 4: Testing & Release (Start Here)
 
-#### Task 4.1 — Unit Tests
+> **Current state entering Phase 4:**
+> - 62 tests total: 58 unit (4 suites) + 2 perf + 5 E2E smoke (pre-existing)
+> - Coverage: ~37% stmts, ~24% branch, ~45% func, ~37% lines
+> - Modules with 0% coverage: ViewerCore, ModelLoader, UIController, FilterPanel, PropertiesPanel, TreeView
+> - Build: 1,164 kB JS + 8 kB CSS
 
-**For ViewerCore (with mocked xeokit):**
+#### Task 4.1 — Unit Tests (≥80% coverage)
+
+**New files needed:**
+- `tests/unit/ViewerCore.test.ts` — Mock all xeokit classes (Viewer, SectionPlanesPlugin, NavCubePlugin)
+- `tests/unit/ModelLoader.test.ts` — Mock GLTFLoaderPlugin
+- `tests/unit/UIController.test.ts` — Mock DOM elements + ViewerCore + all tool refs
+- `tests/unit/FilterPanel.test.ts` — Mock metaScene with discipline data
+- `tests/unit/PropertiesPanel.test.ts` — Test XSS escaping, show/hide
+- `tests/unit/TreeView.test.ts` — Mock TreeViewPlugin, test context menu
+
+**xeokit mock pattern (use this for all Phase 4 tests):**
 ```typescript
-// tests/unit/ViewerCore.test.ts
 jest.mock("@xeokit/xeokit-sdk", () => ({
   Viewer: jest.fn().mockImplementation(() => ({
     scene: {
       setObjectsXRayed: jest.fn(),
       setObjectsSelected: jest.fn(),
-      objectIds: [],
-      getAABB: () => [0,0,0,10,10,10],
-      xrayMaterial: {},
-      highlightMaterial: {},
+      setObjectsVisible: jest.fn(),
+      setObjectsHighlighted: jest.fn(),
+      objectIds: ["obj1", "obj2"],
+      objects: { obj1: { id: "obj1" }, obj2: { id: "obj2" } },
+      selectedObjectIds: [],
+      highlightedObjectIds: [],
+      getAABB: jest.fn(() => [0,0,0,10,10,10]),
+      xrayMaterial: { fill: true, fillAlpha: 0.1, fillColor: [0,0,0], edgeAlpha: 0.5, edgeColor: [0,0,0] },
+      highlightMaterial: { fill: true, edges: true, fillAlpha: 0.3, edgeColor: [1,1,0] },
       models: {},
+      canvas: { canvas: document.createElement("canvas") },
     },
-    camera: { projection: "perspective" },
+    camera: { projection: "perspective", eye: [0,0,10], look: [0,0,0], up: [0,1,0] },
     cameraFlight: { flyTo: jest.fn(), jumpTo: jest.fn() },
-    cameraControl: {},
+    cameraControl: { on: jest.fn(), off: jest.fn(), navMode: "orbit" },
     metaScene: { metaObjects: {} },
     destroy: jest.fn(),
   })),
   SectionPlanesPlugin: jest.fn().mockImplementation(() => ({
-    createSectionPlane: jest.fn(),
+    createSectionPlane: jest.fn(() => ({ id: "sp-1" })),
+    sectionPlanes: {},
     showControl: jest.fn(),
     hideControl: jest.fn(),
     destroySectionPlane: jest.fn(),
     clear: jest.fn(),
   })),
   NavCubePlugin: jest.fn(),
+  GLTFLoaderPlugin: jest.fn().mockImplementation(() => ({
+    load: jest.fn(() => ({ on: jest.fn(), id: "model-1" })),
+  })),
+  TreeViewPlugin: jest.fn().mockImplementation(() => ({
+    on: jest.fn(),
+    destroy: jest.fn(),
+  })),
+  DistanceMeasurementsPlugin: jest.fn().mockImplementation(() => ({
+    createMeasurement: jest.fn(),
+    on: jest.fn(),
+    clear: jest.fn(),
+    destroy: jest.fn(),
+  })),
+  DistanceMeasurementsMouseControl: jest.fn().mockImplementation(() => ({
+    activate: jest.fn(),
+    deactivate: jest.fn(),
+    destroy: jest.fn(),
+    snapping: false,
+  })),
+  PointerLens: jest.fn().mockImplementation(() => ({
+    destroy: jest.fn(),
+  })),
+  AnnotationsPlugin: jest.fn().mockImplementation(() => ({
+    createAnnotation: jest.fn(),
+    annotations: {},
+    on: jest.fn(),
+    clear: jest.fn(),
+    destroy: jest.fn(),
+  })),
 }));
 ```
 
-**Coverage target:** Raise thresholds incrementally per phase. Phase 1 actual: ~8% stmts / 2% branch / 12% funcs / 7% lines (thresholds: 5/2/5/5).
+**After adding all unit tests, raise `jest.config.js` thresholds:**
+```javascript
+coverageThreshold: {
+  global: {
+    branches: 70,
+    functions: 70,
+    lines: 80,
+    statements: 80,
+  },
+},
+```
 
 #### Task 4.2 — E2E Tests
 
@@ -713,8 +708,9 @@ Extend `tests/e2e/viewer.spec.ts`:
 ```javascript
 coverageThreshold: {
   global: {
-    // Current (Phase 1): 2/5/5/5
-    // Target (V1):        80/70/70/80
+    // Current (Phase 3): 2/5/5/5   — actual: ~24/45/37/37
+    // Target (Phase 4):   70/70/80/80
+    // Target (V1):        70/70/80/80
     branches: 2,
     functions: 5,
     lines: 5,
@@ -722,7 +718,7 @@ coverageThreshold: {
   },
 },
 ```
-Raise thresholds incrementally as implementation progresses. Phase 1 actual: ~8% stmts / 2% branch / 12% funcs / 7% lines.
+Raise thresholds in Phase 4 (Task 4.1) after adding comprehensive unit tests. Phase 3 actual: ~37% stmts / 24% branch / 45% funcs / 37% lines.
 
 ---
 
@@ -809,14 +805,17 @@ if (!gl) {
 |------|-------|---------|
 | `src/ui/PropertiesPanel.ts` | 1.3 | ✅ Done — Display IFC metadata (XSS-escaped) |
 | `src/ui/TreeView.ts` | 1.4 | ✅ Done — TreeViewPlugin wrapper + context menu |
-| `src/tools/MeasurementTool.ts` | 2.1 | Distance measurement + cumulative path |
-| `src/annotations/AnnotationOverlay.ts` | 2.3 | 3D markers for annotations |
-| `src/ui/FilterPanel.ts` | 3.1 | Layer/discipline filtering UI |
+| `src/tools/MeasurementTool.ts` | 2.1 | ✅ DONE — Distance measurement + cumulative path (371 lines) |
+| `src/annotations/AnnotationOverlay.ts` | 2.3 | ✅ DONE — 3D markers for annotations (242 lines) |
+| `src/ui/FilterPanel.ts` | 3.1 | ✅ DONE — Layer/discipline filtering UI (312 lines) |
+| `tests/unit/MeasurementTool.test.ts` | 2.1 | ✅ DONE — 27 tests (~98% coverage) |
+| `tests/unit/AnnotationOverlay.test.ts` | 2.3 | ✅ DONE — 12 tests (~93% coverage) |
+| `tests/unit/ImportExport.test.ts` | 2.4 | ✅ DONE — 11 tests (round-trip validation) |
+| `tests/performance/benchmark.spec.ts` | 3.4 | ✅ DONE — Playwright + CDP benchmarks (193 lines) |
 | `tests/unit/ViewerCore.test.ts` | 4.1 | Unit tests for ViewerCore |
 | `tests/unit/ModelLoader.test.ts` | 4.1 | Unit tests for ModelLoader |
 | `tests/unit/UIController.test.ts` | 4.1 | Unit tests for UIController |
-| `tests/unit/MeasurementTool.test.ts` | 4.1 | Unit tests for measurement |
-| `tests/performance/benchmark.ts` | 3.4 | Performance benchmarks |
+| `tests/unit/FilterPanel.test.ts` | 4.1 | Unit tests for FilterPanel |
 
 ---
 
@@ -850,17 +849,17 @@ Before marking any task complete, verify:
 - [x] Task 1.5: Section planes with interactive gizmo
 - [x] Task 1.6: 3D↔2D toggle with smooth animation
 
-### Phase 2: Measurements & Tools
-- [ ] Task 2.1: Two-point distance measurement with snapping
-- [ ] Task 2.2: Cumulative path distance
-- [ ] Task 2.3: 3D annotation markers
-- [ ] Task 2.4: JSON import UI
+### Phase 2: Measurements & Tools — ✅ COMPLETE
+- [x] Task 2.1: Two-point distance measurement with snapping
+- [x] Task 2.2: Cumulative path distance
+- [x] Task 2.3: 3D annotation markers (create/delete; edit UI deferred)
+- [x] Task 2.4: JSON import UI
 
-### Phase 3: Civil Features & Accessibility
-- [ ] Task 3.1: Layer/discipline filtering
-- [ ] Task 3.2: High-contrast toggle
-- [ ] Task 3.3: Full keyboard navigation
-- [ ] Task 3.4: Performance benchmarks
+### Phase 3: Civil Features & Accessibility — ✅ COMPLETE
+- [x] Task 3.1: Layer/discipline filtering (FilterPanel.ts)
+- [x] Task 3.2: High-contrast toggle (localStorage persistence)
+- [x] Task 3.3: Full keyboard navigation (H/F/? shortcuts, skip-link, help overlay)
+- [x] Task 3.4: Performance benchmarks (Playwright + CDP)
 
 ### Phase 4: Testing & Release
 - [ ] Task 4.1: ≥80% unit test coverage
