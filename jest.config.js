@@ -12,13 +12,12 @@ module.exports = {
     "!src/**/*.d.ts",
   ],
   coverageThreshold: {
-    // Phase 1 thresholds: only AnnotationService has tests currently.
-    // TARGET thresholds (raise before V1): branches 70, functions 70, lines 80, statements 80
+    // Phase 4 thresholds (Task 4.1): raised to match achieved coverage
     global: {
-      branches: 2,
-      functions: 5,
-      lines: 5,
-      statements: 5,
+      branches: 70,
+      functions: 90,
+      lines: 90,
+      statements: 90,
     },
   },
   transform: {

@@ -116,6 +116,7 @@ export class FilterPanel {
   init(): void {
     this._buildGroups();
     this._render();
+    this._bindEvents();
     console.info(`[FilterPanel] Initialized with ${this._groups.size} discipline(s).`);
   }
 
@@ -269,8 +270,12 @@ export class FilterPanel {
     }
 
     container.innerHTML = html;
+  }
 
-    // Event delegation
+  /** Bind event listeners once (called from init, not _render) */
+  private _bindEvents(): void {
+    const container = document.getElementById(this._containerId);
+    if (!container) return;
     container.addEventListener("change", this._handleChange);
     container.addEventListener("click", this._handleClick);
   }
