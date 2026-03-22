@@ -666,3 +666,124 @@ body.headset-mode #app {
   font-size: 12px;
   padding: 6px 0;
 }
+
+/* ── Utilities & Underground Panel ────────────────────── */
+
+#utilities-panel {
+  padding: 8px;
+}
+
+#utilities-panel h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+#utilities-panel h5 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+}
+
+.utilities-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.utilities-btn {
+  padding: 4px 10px;
+  min-height: var(--btn-min-size);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.utilities-btn:hover {
+  background: var(--color-border);
+}
+
+.utilities-xray-toggle {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.utilities-count {
+  font-size: 11px;
+  color: var(--color-text-secondary, #888);
+  margin-left: auto;
+}
+
+.utilities-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.utilities-item {
+  padding: 4px 6px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+}
+
+.utilities-item:hover {
+  background: var(--color-surface);
+}
+
+.utilities-item.selected {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.utilities-item-name {
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.utilities-item-type {
+  font-size: 11px;
+  color: var(--color-text-secondary, #888);
+}
+
+.utilities-item-meta {
+  font-size: 11px;
+  color: var(--color-text-secondary, #888);
+}
+
+.utilities-detail {
+  margin-top: 8px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+}
+
+.utilities-detail-table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+.utilities-detail-table td {
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.utilities-detail-table td:first-child {
+  font-weight: 500;
+  width: 40%;
+}
+
+.utilities-empty {
+  font-size: 12px;
+  color: var(--color-text-secondary, #888);
+  padding: 6px 0;
+}

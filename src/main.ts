@@ -17,6 +17,7 @@ import { ChainStationingTool } from "./tools/ChainStationingTool";
 import { AnnotationOverlay } from "./annotations/AnnotationOverlay";
 import { FilterPanel } from "./ui/FilterPanel";
 import { StoreyNavigator } from "./ui/StoreyNavigator";
+import { UtilitiesPanel } from "./ui/UtilitiesPanel";
 import { BCFService } from "./tools/BCFService";
 
 async function init(): Promise<void> {
@@ -58,6 +59,10 @@ async function init(): Promise<void> {
   const storeyNavigator = new StoreyNavigator(viewer, "storey-panel");
   storeyNavigator.init();
 
+  // --- Utilities & Underground panel (Task 5.4) ---
+  const utilitiesPanel = new UtilitiesPanel(viewer, "utilities-panel");
+  utilitiesPanel.init();
+
   // --- Model tree (left panel) ---
   const _treeView = new TreeView(viewer, "tree-view");
 
@@ -79,6 +84,7 @@ async function init(): Promise<void> {
     // Rebuild filter panel and storey navigator once model metadata is available
     filterPanel.init();
     storeyNavigator.init();
+    utilitiesPanel.init();
     // Auto-detect IfcAlignment for stationing
     chainStationingTool.detectAlignments();
   } catch {
