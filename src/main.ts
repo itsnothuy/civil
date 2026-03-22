@@ -20,6 +20,7 @@ import { StoreyNavigator } from "./ui/StoreyNavigator";
 import { UtilitiesPanel } from "./ui/UtilitiesPanel";
 import { BCFService } from "./tools/BCFService";
 import { CollaborationClient } from "./collaboration/CollaborationClient";
+import { PerformanceOptimizer } from "./viewer/PerformanceOptimizer";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -77,6 +78,12 @@ async function init(): Promise<void> {
   // Restore shared viewpoint from URL hash if present
   collaboration.restoreSharedViewpoint();
 
+  // --- Performance Optimizer (Task 5.7) ---
+  const perfOptimizer = new PerformanceOptimizer(viewer);
+  perfOptimizer.enableCache();
+  // LOD is opt-in; enable with large models:
+  // perfOptimizer.enableLOD();
+
   // --- Model tree (left panel) ---
   const _treeView = new TreeView(viewer, "tree-view");
 
@@ -101,6 +108,8 @@ async function init(): Promise<void> {
     utilitiesPanel.init();
     // Auto-detect IfcAlignment for stationing
     chainStationingTool.detectAlignments();
+    // Capture baseline performance metrics after model load
+    perfOptimizer.captureMetrics();
   } catch {
     console.warn(`[CivilBIMViewer] Could not load project "${projectId}" — viewer is empty.`);
   }
