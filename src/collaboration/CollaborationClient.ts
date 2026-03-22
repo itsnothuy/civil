@@ -353,7 +353,11 @@ export class CollaborationClient {
       camera.eye = data.eye;
       camera.look = data.look;
       camera.up = data.up;
-      camera.projection = data.projection as "perspective" | "ortho" | "frustum" | "customProjection";
+      camera.projection = data.projection as
+        | "perspective"
+        | "ortho"
+        | "frustum"
+        | "customProjection";
 
       if (data.selectedObjects.length > 0) {
         this._viewer.viewer.scene.setObjectsSelected(data.selectedObjects, true);
