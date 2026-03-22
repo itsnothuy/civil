@@ -1,6 +1,6 @@
 {
   "name": "civil-bim-viewer",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Open-source, browser-based BIM/IFC viewer for civil and civic engineering",
   "license": "AGPL-3.0-or-later",
   "private": true,

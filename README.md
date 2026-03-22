@@ -5,24 +5,41 @@
 
 [![CI](https://github.com/itsnothuy/civil/actions/workflows/ci.yml/badge.svg)](https://github.com/itsnothuy/civil/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%203.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Unit Tests](https://img.shields.io/badge/unit%20tests-210%20passing-brightgreen)](tests/unit/)
+[![Unit Tests](https://img.shields.io/badge/unit%20tests-389%20passing-brightgreen)](tests/unit/)
 [![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](coverage/lcov-report/index.html)
 [![E2E Tests](https://img.shields.io/badge/e2e%20tests-50%20passing-brightgreen)](tests/e2e/)
 [![Accessibility](https://img.shields.io/badge/axe--core-0%20violations-brightgreen)](tests/e2e/accessibility.spec.ts)
 
-## Features (MVP — v0.1.0)
+## Features (V1 — v1.0.0)
 
+### Viewer Core
 - 🏗️ **3D/2D Model Viewing** — Load glTF/GLB models via xeokit-sdk with NavCube
+- 🌳 **Model Tree** — Hierarchical tree view with context menu (isolate/hide/show all)
+- 🖥️ **Properties Panel** — IFC metadata display with XSS-safe rendering
+- ✂️ **Section Planes** — Up to 6 section planes with interactive gizmos and chip UI
+- 🔬 **X-Ray Mode** — Toggle transparent rendering for hidden objects
+- 🔍 **Search & Filter** — Object search, discipline/layer filtering, Show/Hide All
+
+### Measurement & Annotation
 - 📐 **Measurement Tools** — Two-point distance + cumulative path measurement with snapping
 - 📝 **Annotations** — Create, delete, and manage 3D annotations with severity levels
 - 📋 **JSON Export/Import** — Annotation data round-trips with full fidelity
-- 🔍 **Search & Filter** — Object search, discipline/layer filtering, Show/Hide All
-- 🌳 **Model Tree** — Hierarchical tree view with context menu (isolate/hide/show all)
-- ✂️ **Section Planes** — Up to 6 section planes with interactive gizmos and chip UI
-- 🔬 **X-Ray Mode** — Toggle transparent rendering for hidden objects
+- 📦 **BCF 2.1 Export/Import** — Open BIM Collaboration Format for issue exchange
+
+### Civil Engineering
+- 📏 **Chain/Stationing** — Auto-detect IfcAlignment, station lookup by distance, chainage labels
+- 🏗️ **Storey Navigator** — Plan-level navigation from IfcBuildingStorey metadata
+- 🔧 **Utilities Panel** — Pipe/duct metadata (Pset_*), underground context detection
+- 🌍 **Internationalization** — English, Vietnamese, French (i18n with fallback)
+
+### Collaboration & Performance
+- 🤝 **Collaboration Client** — GitHub OAuth, remote annotation sync, shareable viewpoints
+- ⚡ **Performance Optimizer** — LOD culling, IndexedDB model caching, FPS metrics
+- 🔗 **Optional Server** — Express backend for multi-user annotation sharing
+
+### Accessibility & UI
 - ♿ **Full Accessibility** — Keyboard navigation (10+ shortcuts), ARIA labels, skip-link, axe-core 0 violations
 - 🎨 **High-Contrast Mode** — WCAG AA compliant, persisted via localStorage
-- 🖥️ **Properties Panel** — IFC metadata display with XSS-safe rendering
 - 🥽 **Vision Pro Ready** — Headset-friendly UI with enlarged touch targets
 
 ## Quick Start
@@ -75,14 +92,28 @@ civil-bim-viewer/
 ├── src/
 │   ├── index.html              # App shell
 │   ├── main.ts                 # Entry point
-│   ├── viewer/ViewerCore.ts    # xeokit wrapper
+│   ├── viewer/
+│   │   ├── ViewerCore.ts       # xeokit wrapper
+│   │   └── PerformanceOptimizer.ts # LOD, caching, metrics
 │   ├── loader/ModelLoader.ts   # glTF/GLB model loading
-│   ├── annotations/            # Annotation service + schema
-│   ├── ui/UIController.ts      # Toolbar + keyboard nav
+│   ├── annotations/            # Annotation service + overlay
+│   ├── tools/
+│   │   ├── MeasurementTool.ts  # Distance + path measurement
+│   │   ├── ChainStationingTool.ts # IfcAlignment stationing
+│   │   └── BCFService.ts       # BCF 2.1 export/import
+│   ├── ui/
+│   │   ├── UIController.ts     # Toolbar + keyboard nav
+│   │   ├── FilterPanel.ts      # Layer/discipline filtering
+│   │   ├── StoreyNavigator.ts  # Storey navigation
+│   │   └── UtilitiesPanel.ts   # Underground/utility context
+│   ├── collaboration/          # Remote sync + OAuth
+│   ├── i18n/                   # Translations (en/vi/fr)
 │   └── styles/main.css         # Responsive + headset styles
+├── server/                     # Optional collaboration backend
 ├── tests/
-│   ├── unit/                   # Jest tests
-│   └── e2e/                    # Playwright tests
+│   ├── unit/                   # Jest tests (389 tests, 17 suites)
+│   ├── e2e/                    # Playwright tests
+│   └── performance/            # CDP benchmarks
 ├── scripts/
 │   └── convert-ifc.mjs         # IFC → GLB conversion
 ├── data/
@@ -136,7 +167,7 @@ See [`docs/review/C1-system-architecture-diagram-modules.md`](docs/review/C1-sys
 
 | Suite | Status |
 |-------|--------|
-| **Unit Tests** (Jest) | 210 tests, 10 suites, 93%+ coverage |
+| **Unit Tests** (Jest) | 389 tests, 17 suites, 93%+ coverage |
 | **E2E Tests** (Playwright) | 50 tests across 14 feature areas |
 | **Accessibility** (axe-core) | 0 critical/serious WCAG 2.1 AA violations |
 | **Performance** (CDP benchmarks) | Load time, FPS, heap monitoring |
@@ -152,8 +183,8 @@ npm run test:perf     # Performance benchmarks
 
 | Phase | Timeline | Focus |
 |-------|----------|-------|
-| **MVP** | Weeks 0-6 | Viewer core, measurements, annotations, BCF export |
-| **V1** | Weeks 7-10 | Chain/stationing, utilities filtering, remote sync, i18n |
+| **MVP** ✅ | Weeks 0-6 | Viewer core, measurements, annotations, accessibility |
+| **V1** ✅ | Weeks 7-10 | BCF, chain/stationing, utilities, collaboration, i18n, performance |
 | **V2** | Weeks 11-14 | WebXR (Vision Pro), real-time collab, plugin system |
 
 ## Contributing
