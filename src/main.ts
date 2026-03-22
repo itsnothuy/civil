@@ -13,6 +13,7 @@ import { UIController } from "./ui/UIController";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { TreeView } from "./ui/TreeView";
 import { MeasurementTool } from "./tools/MeasurementTool";
+import { ChainStationingTool } from "./tools/ChainStationingTool";
 import { AnnotationOverlay } from "./annotations/AnnotationOverlay";
 import { FilterPanel } from "./ui/FilterPanel";
 import { StoreyNavigator } from "./ui/StoreyNavigator";
@@ -30,6 +31,9 @@ async function init(): Promise<void> {
 
   // --- Measurement tool ---
   const measurementTool = new MeasurementTool(viewer);
+
+  // --- Chain/Stationing tool (Task 5.2) ---
+  const chainStationingTool = new ChainStationingTool(viewer);
 
   // --- Annotation overlay (3D markers) ---
   const annotationOverlay = new AnnotationOverlay(viewer, annotations, projectId);
@@ -67,6 +71,8 @@ async function init(): Promise<void> {
     // Rebuild filter panel and storey navigator once model metadata is available
     filterPanel.init();
     storeyNavigator.init();
+    // Auto-detect IfcAlignment for stationing
+    chainStationingTool.detectAlignments();
   } catch {
     console.warn(`[CivilBIMViewer] Could not load project "${projectId}" — viewer is empty.`);
   }
