@@ -1,9 +1,9 @@
 # Civil BIM Viewer — 100% Completion Plan
 
-> **Date:** 2026-03-01 (Updated: 2026-03-22 — Phase 3 validated)  
+> **Date:** 2026-03-01 (Updated: 2026-03-22 — Phase 4 Task 4.1 validated)  
 > **Source:** Original plan (`Web Apps in Civil Engineering.txt`), all `docs/` files, current codebase  
 > **Goal:** Complete implementation of ALL features and infrastructure defined in the original plan, through MVP → V1 → V2  
-> **Status:** Phases 1–3 ✅ COMPLETE — all checks passing, 62 tests, validation reports for P1 and P2
+> **Status:** Phases 1–3 ✅ COMPLETE | Task 4.1 ✅ COMPLETE — 210 tests, 93.2% stmt coverage, validation reports for P1–P4
 
 ## How to Use This Document
 
@@ -207,14 +207,33 @@ Phases are sequential. Tasks within a phase can often be parallelized. File refe
 ## Phase 4: Testing, Polish & MVP Release (Week 5-6 — 8-10 dev-days)
 
 > **Goal:** Raise test coverage to 80%, fix bugs, polish UI, cut MVP release.
+>
+> **Status:** Task 4.1 ✅ COMPLETE. Tasks 4.2–4.5 NOT YET STARTED.
+> See `docs/reports/validation-report-phase4.md` (Grade: C+, 72/100 — only Task 4.1 done).
+>
+> **Key implementation details (for Tasks 4.2–4.5 reference):**
+> - 210 unit tests across 10 suites, all passing
+> - Coverage: 93.2% stmts / 76.29% branches / 95.7% funcs / 95.53% lines
+> - jest.config.js thresholds enforced: stmts 90, branches 70, funcs 90, lines 90
+> - FilterPanel event listener accumulation bug FIXED (extracted `_bindEvents()` from `_render()`)
+> - `main.ts` (entry point) excluded from meaningful coverage — has 0%
+> - All other modules ≥93% stmts individually
+> - `eslint-disable @typescript-eslint/no-explicit-any` used in 9 test files (xeokit mock boundaries)
+> - 0 `test.skip`, 0 `test.todo`, 0 `@ts-ignore` in test files
+>
+> **Known gaps (for Tasks 4.2–4.5):**
+> - E2E tests not extended for Phase 2-3 features (only 6 smoke tests from Phase 3)
+> - No axe-core / Lighthouse accessibility audit run yet
+> - README.md badge URLs still reference `YOUR_ORG/civil-bim-viewer`
+> - `feature-traceability-matrix.md` still shows STUB/MISSING for implemented features
+> - No CHANGELOG.md, no v0.1.0 tag
 
-### Task 4.1 — Unit Tests for All Modules
-- **Files:** `tests/unit/ViewerCore.test.ts`, `tests/unit/ModelLoader.test.ts`, `tests/unit/UIController.test.ts`, `tests/unit/MeasurementTool.test.ts`
-- **Note:** Phase 1 has 8/8 tests passing (AnnotationService). Coverage: ~8% stmts / 2% branch / 12% funcs / 7% lines. Jest mock must use `jest.mock("@xeokit/xeokit-sdk", ...)` (bare specifier).
-- **Work:** Write comprehensive unit tests for all modules. Target: ≥80% statement coverage.
-- **AC:** `npm run test:coverage` reports ≥80% statements, ≥70% branches.
-- **Effort:** 3-4 days
-- **Dependencies:** Phases 1-3 (need implemented code)
+### Task 4.1 — Unit Tests for All Modules ✅
+- **Files:** `tests/unit/ViewerCore.test.ts` (388 lines, 28 tests), `tests/unit/ModelLoader.test.ts` (155 lines, 8 tests), `tests/unit/UIController.test.ts` (744 lines, 46 tests), `tests/unit/FilterPanel.test.ts` (468 lines, 35 tests), `tests/unit/PropertiesPanel.test.ts` (222 lines, 17 tests), `tests/unit/TreeView.test.ts` (321 lines, 18 tests)
+- **Status:** DONE — 6 new test suites created (148 new tests), FilterPanel bug fixed, coverage thresholds raised.
+- **AC:** ✅ `npm run test:coverage` reports 93.2% statements (target ≥80%), 76.29% branches (target ≥70%).
+- **Effort:** 3-4 days (as estimated)
+- **Dependencies:** Phases 1-3 ✅
 
 ### Task 4.2 — E2E Tests with Playwright
 - **File:** `tests/e2e/viewer.spec.ts` + new spec files
@@ -412,18 +431,17 @@ Phases are sequential. Tasks within a phase can often be parallelized. File refe
 
 ## Critical Path
 
-Phases 1-3 are complete. The critical path to MVP is now:
+Phases 1-3 and Task 4.1 are complete. The critical path to MVP is now:
 
 ```
-Phase 3 ✅ ──┐
-              ├── Task 4.1 (unit tests — raise coverage to ≥80%)
-              ├── Task 4.2 (E2E tests for all features)
+Task 4.1 ✅ ──┐
+              ├── Task 4.2 (E2E tests for all features) ← LARGEST REMAINING
               ├── Task 4.3 (accessibility audit — Lighthouse ≥90)
               ├── Task 4.4 (documentation update)
               └── Task 4.5 (v0.1.0 release) ── MVP DONE
 ```
 
-**Remaining bottleneck:** Task 4.1 is the largest task — it requires writing 6 new test suites to cover ViewerCore, ModelLoader, UIController, FilterPanel, PropertiesPanel, and TreeView. This is 60-70% of Phase 4 effort.
+**Remaining bottleneck:** Task 4.2 is the largest remaining task (~2-3 days). It requires extending E2E tests for measurement, annotation, filtering, keyboard shortcuts, section planes, and cross-browser testing.
 
 **Post-MVP critical path:**
 ```
@@ -434,13 +452,12 @@ MVP (v0.1.0) ── Phase 5 (V1 features) ── Phase 6 (V2 features) ── Ph
 
 ## Recommended Execution Order for Next Claude Session
 
-> Phases 1-3 are complete. Start with Phase 4 (Testing & MVP Release).
+> Task 4.1 is complete (210 tests, 93.2% coverage). Continue with Tasks 4.2–4.5.
 
-1. **Task 4.1** — Comprehensive unit tests for ViewerCore, ModelLoader, UIController, FilterPanel, PropertiesPanel, TreeView ← **START HERE**
-2. **Task 4.2** — Extend E2E tests for all features (measurement, annotations, filtering, keyboard)
-3. **Task 4.3** — Accessibility audit (axe + Lighthouse ≥90)
-4. **Task 4.4** — Documentation update (README, Getting Started, Architecture)
-5. **Task 4.5** — Tag v0.1.0 MVP release
+1. **Task 4.2** — Extend E2E tests for measurement, annotations, filtering, keyboard, section planes, cross-browser ← **START HERE**
+2. **Task 4.3** — Accessibility audit (install `@axe-core/playwright`, run axe + Lighthouse ≥90)
+3. **Task 4.4** — Documentation update (fix README badges, add screenshots, update traceability matrix, update issues ledger)
+4. **Task 4.5** — Create CHANGELOG.md, tag v0.1.0, create GitHub Release
 
 ---
 
@@ -456,9 +473,11 @@ docs/
 │   ├── PROMPT-validate-phase-6.md                ← Phase 6 validation prompt
 │   └── PROMPT-validate-phase-7.md                ← Phase 7 validation prompt
 ├── reports/
-│   ├── completion-plan-2026-03-01.md             ← THIS DOCUMENT (updated Phase 3)
+│   ├── completion-plan-2026-03-01.md             ← THIS DOCUMENT (updated Phase 4 Task 4.1)
 │   ├── validation-report-2026-03-01-phase1.md    ← Phase 1 validation (15 issues → all fixed)
-│   └── validation-report-2026-03-01-phase2.md    ← Phase 2 validation (Grade B, 85%)
+│   ├── validation-report-2026-03-01-phase2.md    ← Phase 2 validation (Grade B, 85%)
+│   ├── validation-report-phase3.md               ← Phase 3 validation (Grade B, 84%)
+│   └── validation-report-phase4.md               ← Phase 4 validation (Grade C+, 72% — only Task 4.1 done)
 └── review/
     ├── A1-product-definition-PRD.md              ← PRD / personas
     ├── C1-system-architecture-diagram-modules.md ← Architecture
