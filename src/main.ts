@@ -17,6 +17,7 @@ import { ChainStationingTool } from "./tools/ChainStationingTool";
 import { AnnotationOverlay } from "./annotations/AnnotationOverlay";
 import { FilterPanel } from "./ui/FilterPanel";
 import { StoreyNavigator } from "./ui/StoreyNavigator";
+import { BCFService } from "./tools/BCFService";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -41,6 +42,13 @@ async function init(): Promise<void> {
   // --- UI wiring (initialize before model load so UI is interactive immediately) ---
   const ui = new UIController(viewer, annotations, projectId, measurementTool, annotationOverlay);
   ui.init();
+
+  // --- BCF service (Task 5.3) ---
+  const bcfService = new BCFService(viewer, annotations, projectId);
+  // Wire BCF export button
+  document.getElementById("btn-export-bcf")?.addEventListener("click", () => {
+    bcfService.downloadBCF().catch((err: unknown) => console.error("[BCF Export]", err));
+  });
 
   // --- Layer/discipline filter panel ---
   const filterPanel = new FilterPanel(viewer, "filter-panel");
