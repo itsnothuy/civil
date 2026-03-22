@@ -23,14 +23,6 @@ async function init(): Promise<void> {
   // --- Viewer Core (xeokit) ---
   const viewer = new ViewerCore("viewer-canvas");
 
-  // --- Model Loader ---
-  const loader = new ModelLoader(viewer);
-  try {
-    await loader.loadProject(projectId);
-  } catch {
-    console.warn(`[CivilBIMViewer] Could not load project "${projectId}" — viewer is empty.`);
-  }
-
   // --- Annotations ---
   const annotations = new AnnotationService(viewer);
   annotations.loadFromLocalStorage(projectId);
@@ -41,7 +33,7 @@ async function init(): Promise<void> {
   // --- Annotation overlay (3D markers) ---
   const annotationOverlay = new AnnotationOverlay(viewer, annotations, projectId);
 
-  // --- UI wiring ---
+  // --- UI wiring (initialize before model load so UI is interactive immediately) ---
   const ui = new UIController(viewer, annotations, projectId, measurementTool, annotationOverlay);
   ui.init();
 
@@ -62,6 +54,16 @@ async function init(): Promise<void> {
       propertiesPanel.hide();
     }
   });
+
+  // --- Model Loader (non-blocking — UI works even if model fails) ---
+  const loader = new ModelLoader(viewer);
+  try {
+    await loader.loadProject(projectId);
+    // Rebuild filter panel once model metadata is available
+    filterPanel.init();
+  } catch {
+    console.warn(`[CivilBIMViewer] Could not load project "${projectId}" — viewer is empty.`);
+  }
 
   console.info(`[CivilBIMViewer] Project "${projectId}" loaded.`);
 }

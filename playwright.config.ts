@@ -15,7 +15,12 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        launchOptions: {
+          args: ["--use-gl=angle", "--use-angle=swiftshader"],
+        },
+      },
     },
     {
       name: "safari",
@@ -23,7 +28,12 @@ export default defineConfig({
     },
     {
       name: "mobile-chrome",
-      use: { ...devices["Pixel 7"] },
+      use: {
+        ...devices["Pixel 7"],
+        launchOptions: {
+          args: ["--use-gl=angle", "--use-angle=swiftshader"],
+        },
+      },
     },
   ],
   webServer: {

@@ -40,13 +40,19 @@ export class ModelLoader {
     });
 
     return new Promise<void>((resolve, reject) => {
+      let settled = false;
+
       sceneModel.on("loaded", () => {
+        if (settled) return;
+        settled = true;
         this._viewer.viewer.cameraFlight.flyTo(sceneModel);
         console.info(`[ModelLoader] Project "${projectId}" loaded successfully.`);
         resolve();
       });
 
       sceneModel.on("error", (msg: string) => {
+        if (settled) return;
+        settled = true;
         console.error(`[ModelLoader] Failed to load project "${projectId}": ${msg}`);
         // Show user-facing error (escape HTML to prevent XSS)
         const panel = document.getElementById("properties-panel");
@@ -56,6 +62,14 @@ export class ModelLoader {
         }
         reject(new Error(msg));
       });
+
+      // Timeout to prevent hanging if neither event fires
+      setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        console.warn(`[ModelLoader] Timed out loading project "${projectId}".`);
+        reject(new Error(`Model load timed out for "${projectId}".`));
+      }, 30000);
     });
   }
 

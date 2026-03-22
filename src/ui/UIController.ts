@@ -107,7 +107,9 @@ export class UIController {
       const a = document.createElement("a");
       a.href = url;
       a.download = "annotations.json";
+      document.body.appendChild(a);
       a.click();
+      a.remove();
       URL.revokeObjectURL(url);
     });
 

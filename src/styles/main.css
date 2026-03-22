@@ -16,7 +16,8 @@
   --color-bg: #1a1a2e;
   --color-surface: #16213e;
   --color-border: #0f3460;
-  --color-accent: #e94560;
+  --color-accent: #c9354d; /* WCAG AA: ≥4.5:1 contrast with #fff */
+  --color-accent-text: #f06080; /* Lighter accent for text-on-surface: ≥4.5:1 on #16213e */
   --color-text: #eaeaea;
   --color-text-muted: #9a9ab0;
   --toolbar-height: 48px;
@@ -32,6 +33,7 @@
     --color-surface: #111;
     --color-border: #fff;
     --color-accent: #ffff00;
+    --color-accent-text: #ffff00;
     --color-text: #fff;
   }
 }
@@ -42,6 +44,7 @@ body.high-contrast {
   --color-surface: #111;
   --color-border: #fff;
   --color-accent: #ffff00;
+  --color-accent-text: #ffff00;
   --color-text: #fff;
   --color-text-muted: #ccc;
 }
@@ -133,6 +136,17 @@ button[aria-pressed="true"] {
   color: #fff;
 }
 
+/* High-contrast: yellow bg needs dark text for sufficient contrast */
+body.high-contrast button[aria-pressed="true"] {
+  color: #000;
+}
+
+@media (prefers-contrast: more) {
+  button[aria-pressed="true"] {
+    color: #000;
+  }
+}
+
 /* ---- Section-plane chips ---- */
 #section-list {
   display: flex;
@@ -147,7 +161,7 @@ button[aria-pressed="true"] {
   padding: 0 8px;
   font-size: 11px;
   border-color: var(--color-accent);
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .section-chip:hover {
@@ -279,7 +293,7 @@ button[aria-pressed="true"] {
 #properties-panel h3 {
   margin-bottom: 8px;
   font-size: 15px;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 #properties-panel h4 {
@@ -313,7 +327,7 @@ button[aria-pressed="true"] {
 }
 
 #properties-panel .error {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 /* ---- Headset / Vision Pro mode ---- */
@@ -384,7 +398,7 @@ body.headset-mode #app {
 .tree-context-menu button:hover,
 .tree-context-menu button:focus-visible {
   background: var(--color-border);
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 /* ---- Annotation markers & labels ---- */
@@ -413,7 +427,7 @@ body.headset-mode #app {
 }
 
 .ann-label strong {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .ann-label em {
@@ -439,6 +453,11 @@ body.headset-mode #app {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Ensure hidden attribute works even with display: flex above */
+.annotation-form[hidden] {
+  display: none;
 }
 
 .annotation-form label {
@@ -556,7 +575,7 @@ body.headset-mode #app {
 .keyboard-help h3 {
   margin: 0 0 12px;
   font-size: 16px;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .keyboard-help dl {
