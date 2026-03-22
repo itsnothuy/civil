@@ -19,6 +19,7 @@ import { FilterPanel } from "./ui/FilterPanel";
 import { StoreyNavigator } from "./ui/StoreyNavigator";
 import { UtilitiesPanel } from "./ui/UtilitiesPanel";
 import { BCFService } from "./tools/BCFService";
+import { CollaborationClient } from "./collaboration/CollaborationClient";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -62,6 +63,19 @@ async function init(): Promise<void> {
   // --- Utilities & Underground panel (Task 5.4) ---
   const utilitiesPanel = new UtilitiesPanel(viewer, "utilities-panel");
   utilitiesPanel.init();
+
+  // --- Collaboration client (Task 5.5) — optional backend ---
+  const collabConfig = {
+    apiUrl: params.get("apiUrl") ?? "http://localhost:4000/api",
+    githubClientId: params.get("githubClientId") ?? undefined,
+    projectId,
+  };
+  const collaboration = new CollaborationClient(viewer, annotations, collabConfig);
+  collaboration.connect().catch(() => {
+    /* offline is fine */
+  });
+  // Restore shared viewpoint from URL hash if present
+  collaboration.restoreSharedViewpoint();
 
   // --- Model tree (left panel) ---
   const _treeView = new TreeView(viewer, "tree-view");

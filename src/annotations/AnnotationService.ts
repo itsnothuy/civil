@@ -72,9 +72,19 @@ export class AnnotationService {
   }
 
   /** Persist all annotations to localStorage */
-  private _persist(projectId: string): void {
+  saveToLocalStorage(projectId: string): void {
     const key = `${STORAGE_KEY_PREFIX}:${projectId}`;
     localStorage.setItem(key, JSON.stringify(Array.from(this.annotations.values())));
+  }
+
+  /** @deprecated Use saveToLocalStorage — alias kept for internal callers */
+  private _persist(projectId: string): void {
+    this.saveToLocalStorage(projectId);
+  }
+
+  /** Get an annotation by ID */
+  get(id: string): Annotation | undefined {
+    return this.annotations.get(id);
   }
 
   /** Add a new annotation */
