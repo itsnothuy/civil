@@ -15,6 +15,7 @@ import { TreeView } from "./ui/TreeView";
 import { MeasurementTool } from "./tools/MeasurementTool";
 import { AnnotationOverlay } from "./annotations/AnnotationOverlay";
 import { FilterPanel } from "./ui/FilterPanel";
+import { StoreyNavigator } from "./ui/StoreyNavigator";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -41,6 +42,10 @@ async function init(): Promise<void> {
   const filterPanel = new FilterPanel(viewer, "filter-panel");
   filterPanel.init();
 
+  // --- Storey navigator (Task 5.1) ---
+  const storeyNavigator = new StoreyNavigator(viewer, "storey-panel");
+  storeyNavigator.init();
+
   // --- Model tree (left panel) ---
   const _treeView = new TreeView(viewer, "tree-view");
 
@@ -59,8 +64,9 @@ async function init(): Promise<void> {
   const loader = new ModelLoader(viewer);
   try {
     await loader.loadProject(projectId);
-    // Rebuild filter panel once model metadata is available
+    // Rebuild filter panel and storey navigator once model metadata is available
     filterPanel.init();
+    storeyNavigator.init();
   } catch {
     console.warn(`[CivilBIMViewer] Could not load project "${projectId}" — viewer is empty.`);
   }

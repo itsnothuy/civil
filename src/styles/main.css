@@ -603,3 +603,66 @@ body.headset-mode #app {
   display: flex;
   align-items: center;
 }
+
+/* ---- Storey Navigator (Task 5.1) ---- */
+#storey-panel h4 {
+  margin: 12px 0 6px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.storey-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+#storey-select {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#storey-select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.storey-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.storey-buttons button {
+  flex: 1;
+  padding: 4px 8px;
+  min-height: var(--btn-min-size);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.storey-buttons button:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.storey-buttons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.storey-empty {
+  font-size: 12px;
+  padding: 6px 0;
+}
