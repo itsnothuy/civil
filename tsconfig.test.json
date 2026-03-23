@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "webxr"],
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "noUnusedLocals": false,
