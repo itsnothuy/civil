@@ -1,9 +1,9 @@
 # Civil BIM Viewer — 100% Completion Plan
 
-> **Date:** 2026-03-01 (Updated: 2026-03-22 — Phase 4 fully validated, Grade A- 90%)  
+> **Date:** 2026-03-01 (Updated: 2026-03-24 — Phase 6 validated, Grade B+ 88%)  
 > **Source:** Original plan (`Web Apps in Civil Engineering.txt`), all `docs/` files, current codebase  
 > **Goal:** Complete implementation of ALL features and infrastructure defined in the original plan, through MVP → V1 → V2  
-> **Status:** Phases 1–4 ✅ COMPLETE (MVP) | 210 unit tests (92.5% stmts) + 57 E2E tests (0 a11y violations) | Ready for Phase 5
+> **Status:** Phases 1–6 ✅ COMPLETE (V2) | 626 unit tests (87.09% stmts) + 57 E2E tests (0 a11y violations) | Ready for Phase 7
 
 ## How to Use This Document
 
@@ -334,40 +334,53 @@ Phases are sequential. Tasks within a phase can often be parallelized. File refe
 
 ---
 
-## Phase 6: V2 Features (Weeks 11-14+ — 25-40 dev-days)
+## Phase 6: V2 Features ✅ COMPLETE (Grade B+ — 88%)
 
 > **Goal:** Vision Pro, real-time collaboration, plugin system, offline support.
 > **Source:** Sections A (V2), E2 (V2), F1-F2, K1 (Weeks 11-14)
+> **Validation:** [validation-report-phase6.md](validation-report-phase6.md)
+> **Completed:** 2026-03-24 — All 6 tasks implemented with 237 new tests (626 total)
 
-### Task 6.1 — Vision Pro Headset-Friendly UI (F1 Track 1)
+### Task 6.1 — Vision Pro Headset-Friendly UI (F1 Track 1) ✅
 - **Work:** Large buttons (>10mm targets), simplified HUD, gaze-based focus, pinch selection, radial menus. Test on Vision Pro Simulator.
 - **Effort:** 4-5 days
 - **Source refs:** F1-F2 Track 1
+- **Implementation:** VisionProUI.ts (516 lines, 32 tests). Headset detection, `.headset-mode` CSS class, HUD with ≥64px targets, radial menu, gaze-based focus highlighting, pinch-to-select.
+- **Gap:** No Vision Pro Simulator test (no hardware). Coverage 70.64% stmts.
 
-### Task 6.2 — WebXR Immersive Prototype (F1 Track 2)
+### Task 6.2 — WebXR Immersive Prototype (F1 Track 2) ✅
 - **Work:** Enable WebXR in Safari. Create XR session with glTF model. Map transient-pointer input to selection. Evaluate comfort. May require Three.js bridge.
 - **Effort:** 5-8 days (high uncertainty)
 - **Source refs:** F1-F2 Track 2
+- **Implementation:** WebXRSession.ts (437 lines, 26 tests). WebXR session management (immersive-vr/ar), capability detection, pointer input mapping, comfort reporting. Documented as PROTOTYPE.
+- **Gap:** No real XR device test. Coverage 73.83% stmts.
 
-### Task 6.3 — Real-Time Collaboration
+### Task 6.3 — Real-Time Collaboration ✅
 - **Work:** WebRTC/WebSocket backend. Multi-user annotation sessions. Role-based permissions. Last-write-wins conflict resolution.
 - **Effort:** 6-10 days
 - **Source refs:** E2 Real-time Collaboration (V2)
+- **Implementation:** RealtimeSync.ts (541 lines, 48 tests). WebSocket sync with auto-reconnect, presence tracking, role-based permissions (viewer/editor/admin), last-write-wins conflict resolution, offline queue, rate limiting.
+- **Gap:** No server-side WS handler (client-only). No multi-user E2E test.
 
-### Task 6.4 — Plugin System
+### Task 6.4 — Plugin System ✅
 - **Work:** Define plugin API. Hook system for extending viewer. Manifest format. Sandboxing. Sample plugin (IoT sensor overlay).
 - **Effort:** 5-8 days
 - **Source refs:** E2 Plugin System (V2)
+- **Implementation:** PluginAPI.ts (152 lines) + PluginLoader.ts (324 lines, 43 tests). Manifest schema, lifecycle hooks (init/activate/deactivate/destroy), permission-gated sandboxed context. `plugins/sample-iot/` IoT sensor overlay demo. Coverage 95.1% stmts.
 
-### Task 6.5 — Mobile Offline Support
+### Task 6.5 — Mobile Offline Support ✅
 - **Work:** Service Worker for offline caching. IndexedDB for annotations/models. Background sync. Storage budget management (50 MB-1 GB).
 - **Effort:** 4-6 days
 - **Source refs:** E2 Mobile Offline Support (V2)
+- **Implementation:** OfflineStorage.ts (342 lines) + ServiceWorkerManager.ts (256 lines, 39 tests combined). IndexedDB with 3 stores, background sync queue, storage budget (100 MB default), cleanup.
+- **Gap:** No actual `sw.js` worker file. ServiceWorkerManager coverage 67.36% stmts.
 
-### Task 6.6 — Server-Assisted Pipeline
+### Task 6.6 — Server-Assisted Pipeline ✅
 - **Work:** IFC upload API. Conversion job queue. Docker container running ifcConvert. Object storage. CDN. File size limits. Progress feedback.
 - **Effort:** 5-8 days
 - **Source refs:** D1 Pipeline 2, C2 API Boundaries
+- **Implementation:** UploadEndpoint.ts (136 lines) + ConversionQueue.ts (295 lines) + ModelStorage.ts (109 lines) + docker/Dockerfile (50 lines, 49 tests). Upload validation (extension, MIME, content), job queue with concurrency/retry, CDN config.
+- **Gap:** Dockerfile is placeholder (ifcConvert binary not included).
 
 ---
 
@@ -422,7 +435,7 @@ Phases are sequential. Tasks within a phase can often be parallelized. File refe
 | 4 | Testing & MVP release | 8-10 | 1 week | Weeks 5-6 |
 | **MVP Total** | | **39-57** | **5-8 weeks** | **Week 6-8 ✅** |
 | 5 | V1 features ✅ | 20-30 | 2.5-4 weeks | Weeks 7-10 ✅ |
-| 6 | V2 features | 25-40 | 3-5 weeks | Weeks 11-14+ |
+| 6 | V2 features ✅ | 25-40 | 3-5 weeks | Weeks 11-14 ✅ |
 | 7 | Production infra | 10-15 | 1.5-2 weeks | Ongoing |
 | **100% Total** | | **94-142** | **12-19 weeks** | |
 
@@ -430,49 +443,52 @@ Phases are sequential. Tasks within a phase can often be parallelized. File refe
 
 ## Critical Path
 
-Phases 1-5 are complete. V1 is functionally done with Grade B+ (82%). The critical path forward:
+Phases 1-6 are complete. V2 features are functionally done with Grade B+ (88%). The critical path forward:
 
 ```
-Phase 5 ✅ (V1) ──┐
-                  ├── Tag v1.0.0 ✅ (complete)
-                  ├── Address i18n integration gap (optional)
-                  └── Phase 6 (V2) ── Phase 7 (infra)
+Phase 6 ✅ (V2) ──┐
+                  ├── Fix coverage regression (87.09% → 90% stmts)
+                  ├── Address fix-list items 1-4 (see validation-report-phase6.md)
+                  └── Phase 7 (production infra)
 ```
 
-**Phase 5 completion status:**
-1. ✅ All 8 V1 tasks implemented with 179 new tests
-2. ✅ Git tag v1.0.0 created
-3. ⚠️ One major gap: i18n service not integrated into UI modules
-4. ✅ Test coverage maintained above target (89.94% stmt)
+**Phase 6 completion status:**
+1. ✅ All 6 V2 tasks implemented with 237 new tests (626 total)
+2. ✅ All 6 commits with conventional messages
+3. ⚠️ Coverage regression: 87.09% stmts (below 90% threshold)
+4. ⚠️ No E2E tests for Phase 6 features
+5. ⚠️ Docker pipeline is placeholder (no actual ifcConvert binary)
+6. ⚠️ No server-side WebSocket handler (client-only collaboration)
 
-**Post-V1 critical path:**
+**Post-V2 critical path:**
 ```
-V1 (v1.0.0) ── [Optional: i18n integration] ── Phase 6 (V2, 25-40 days) ── Phase 7 (production infra)
+V2 (Phase 6) ── [Coverage fix + fix-list 1-4] ── Phase 7 (production infra, 10-15 days)
 ```
 
 ---
 
 ## Recommended Execution Order for Next Claude Session
 
-> Phase 5 is complete (Grade B+ — 82%). V1 is functionally done. Ready for Phase 6 (V2 features).
+> Phase 6 is complete (Grade B+ — 88%). V2 features are functionally done. Ready for Phase 7 (Production Infrastructure).
 
-**Optional Phase 5 gap resolution (before Phase 6):**
-1. Integrate i18n service into UI modules (add language switcher component)
-2. Wire translated strings into existing UI components
-3. Add E2E tests for Phase 5 features
+**Recommended Phase 6 gap resolution (before or during Phase 7):**
+1. Fix coverage regression: add tests to VisionProUI (70.64%), WebXRSession (73.83%), ServiceWorkerManager (67.36%)
+2. Create actual `public/sw.js` service worker file (or integrate vite-plugin-pwa)
+3. Add server-side WebSocket handler in `server/ws/`
+4. Make Docker pipeline functional (obtain ifcConvert binary)
 
-**Phase 6 execution order:**
-1. **Task 6.1** — Vision Pro Headset-Friendly UI ← **START HERE** (F1 Track 1)
-2. **Task 6.2** — WebXR Immersive Prototype (F1 Track 2)
-3. **Task 6.3** — Real-Time Collaboration (WebRTC/WebSocket backend)
-4. **Task 6.4** — Plugin System (API hooks + manifest format)
-5. **Task 6.5** — Mobile Offline Support (Service Worker + IndexedDB)
-6. **Task 6.6** — Server-Assisted Pipeline (IFC upload + conversion queue)
+**Phase 7 execution order:**
+1. **Task 7.1** — Security Hardening (CSP, HTTPS, rate limiting)
+2. **Task 7.2** — Error Handling & Monitoring (error boundaries, logging, health checks)
+3. **Task 7.3** — Release Engineering (semver, CHANGELOG automation, Docker images)
+4. **Task 7.4** — Community & Governance (docs, project board, outreach)
 
-**Outstanding technical debt (deferred from Phase 5):**
+**Outstanding technical debt (deferred from Phases 5+6):**
 - i18n service integration (language switcher + UI string wiring)
-- E2E tests for Phase 5 V1 features
-- Branch coverage improvement (currently 70.06%, could reach 75%+)
+- E2E tests for Phase 5+6 features
+- Coverage threshold breach (87.09% stmts vs 90% threshold)
+- Plugin sandbox hardening (iframe/Worker isolation for production)
+- IndexedDB encryption at rest
 
 ---
 
@@ -488,12 +504,13 @@ docs/
 │   ├── PROMPT-validate-phase-6.md                ← Phase 6 validation prompt
 │   └── PROMPT-validate-phase-7.md                ← Phase 7 validation prompt
 ├── reports/
-│   ├── completion-plan-2026-03-01.md             ← THIS DOCUMENT (updated Phase 5 complete)
+│   ├── completion-plan-2026-03-01.md             ← THIS DOCUMENT (updated Phase 6 complete)
 │   ├── validation-report-2026-03-01-phase1.md    ← Phase 1 validation (Grade A, 92%)
 │   ├── validation-report-2026-03-01-phase2.md    ← Phase 2 validation (Grade B, 85%)
 │   ├── validation-report-phase3.md               ← Phase 3 validation (Grade B, 84%)
 │   ├── validation-report-phase4.md               ← Phase 4 validation (Grade A-, 90% — all tasks done)
-│   └── validation-report-phase5.md               ← Phase 5 validation (Grade B+, 82% — i18n gap)
+│   ├── validation-report-phase5.md               ← Phase 5 validation (Grade B+, 82% — i18n gap)
+│   └── validation-report-phase6.md               ← Phase 6 validation (Grade B+, 88% — coverage gap)
 └── review/
     ├── A1-product-definition-PRD.md              ← PRD / personas
     ├── C1-system-architecture-diagram-modules.md ← Architecture

@@ -3,7 +3,7 @@
 > **For:** Claude Opus 4.6 in GitHub Copilot (VS Code Agent Mode)  
 > **Purpose:** Act as a senior full-stack software engineer to implement the Civil BIM Viewer phase-by-phase until 100% functional  
 > **Companion doc:** `docs/reports/completion-plan-2026-03-01.md` (task definitions, AC, dependencies)  
-> **Last updated:** 2026-03-22 (Phases 1-4 complete; MVP validated A- 90%; ready for Phase 5)
+> **Last updated:** 2026-03-24 (Phases 1-6 complete; V2 validated B+ 88%; ready for Phase 7)
 
 ---
 
@@ -77,7 +77,33 @@ civil/
 │   ├── tools/MeasurementTool.ts             # ✅ DONE — two-point + path measurement, snap, m/ft, export (371 lines)
 │   ├── annotations/AnnotationOverlay.ts     # ✅ DONE — 3D markers via AnnotationsPlugin, inline form (242 lines)
 │   ├── annotations/AnnotationService.ts     # ✅ DONE — CRUD, localStorage, JSON export/import (199 lines)
-│   └── styles/main.css                      # ✅ DONE — layout, high-contrast, filter, skip-link, help overlay, a11y fixes (~606 lines)
+│   ├── viewer/StoreyNavigator.ts            # ✅ DONE — Floor/storey-aware 2D plan navigation (336 lines) [Phase 5]
+│   ├── tools/ChainStationingTool.ts         # ✅ DONE — Alignment-aware stationing measurement (435 lines) [Phase 5]
+│   ├── collaboration/BCFService.ts          # ✅ DONE — BCF 2.1 export/import with zip (482 lines) [Phase 5]
+│   ├── ui/UtilitiesPanel.ts                 # ✅ DONE — Pipe metadata + underground context (409 lines) [Phase 5]
+│   ├── collaboration/CollaborationClient.ts # ✅ DONE — Remote annotation sync + GitHub OAuth (407 lines) [Phase 5]
+│   ├── i18n/I18nService.ts                  # ✅ DONE — i18n with EN/VI/FR translations (145 lines) [Phase 5]
+│   ├── viewer/PerformanceOptimizer.ts       # ✅ DONE — Caching, LOD, lazy loading (513 lines) [Phase 5]
+│   ├── xr/VisionProUI.ts                    # ✅ DONE — Headset detection, HUD, radial menu, gaze/pinch (516 lines) [Phase 6]
+│   ├── xr/WebXRSession.ts                   # ✅ DONE — WebXR session, capabilities, comfort report (437 lines) [Phase 6]
+│   ├── collaboration/RealtimeSync.ts        # ✅ DONE — WebSocket sync, presence, roles, offline queue (541 lines) [Phase 6]
+│   ├── plugins/PluginAPI.ts                 # ✅ DONE — Plugin interfaces, manifest, permissions (152 lines) [Phase 6]
+│   ├── plugins/PluginLoader.ts              # ✅ DONE — Registration, lifecycle, sandbox (324 lines) [Phase 6]
+│   ├── offline/OfflineStorage.ts            # ✅ DONE — IndexedDB wrapper, 3 stores (342 lines) [Phase 6]
+│   ├── offline/ServiceWorkerManager.ts      # ✅ DONE — SW registration, lifecycle, background sync (256 lines) [Phase 6]
+│   └── styles/main.css                      # ✅ DONE — layout, high-contrast, filter, headset-mode, WebXR overlay (~780 lines)
+├── server/
+│   ├── index.ts                             # ✅ DONE — Express REST API for annotations (324 lines) [Phase 5]
+│   └── pipeline/
+│       ├── UploadEndpoint.ts                # ✅ DONE — IFC upload validation (136 lines) [Phase 6]
+│       ├── ConversionQueue.ts               # ✅ DONE — Job queue with retry (295 lines) [Phase 6]
+│       └── ModelStorage.ts                  # ✅ DONE — Storage + CDN config (109 lines) [Phase 6]
+├── plugins/
+│   └── sample-iot/                          # ✅ DONE — IoT sensor overlay demo plugin [Phase 6]
+│       ├── manifest.json
+│       └── index.ts                         # (156 lines)
+├── docker/
+│   └── Dockerfile                           # ✅ DONE — Multi-stage ifcConvert container (50 lines) [Phase 6]
 ├── tests/
 │   ├── unit/ViewerCore.test.ts              # ✅ 28/28 passing (96.8% stmts)
 │   ├── unit/ModelLoader.test.ts             # ✅ 8/8 passing (81.6% stmts)
@@ -589,111 +615,95 @@ For each phase in the completion plan:
 
 ---
 
-### PHASE 4: Testing & Release (Start Here)
+### PHASE 4: Testing & Release — ✅ COMPLETE
 
-> **Current state entering Phase 4:**
-> - 62 tests total: 58 unit (4 suites) + 2 perf + 5 E2E smoke (pre-existing)
-> - Coverage: ~37% stmts, ~24% branch, ~45% func, ~37% lines
-> - Modules with 0% coverage: ViewerCore, ModelLoader, UIController, FilterPanel, PropertiesPanel, TreeView
-> - Build: 1,164 kB JS + 8 kB CSS
+> Entered Phase 4 with 62 tests, ~37% stmts. Exited with 210 tests, 92.47% stmts.
+> See `docs/reports/validation-report-phase4.md` (Grade A-, 90%).
 
-#### Task 4.1 — Unit Tests (≥80% coverage)
+---
 
-**New files needed:**
-- `tests/unit/ViewerCore.test.ts` — Mock all xeokit classes (Viewer, SectionPlanesPlugin, NavCubePlugin)
-- `tests/unit/ModelLoader.test.ts` — Mock GLTFLoaderPlugin
-- `tests/unit/UIController.test.ts` — Mock DOM elements + ViewerCore + all tool refs
-- `tests/unit/FilterPanel.test.ts` — Mock metaScene with discipline data
-- `tests/unit/PropertiesPanel.test.ts` — Test XSS escaping, show/hide
-- `tests/unit/TreeView.test.ts` — Mock TreeViewPlugin, test context menu
+### PHASE 5: V1 Features — ✅ COMPLETE
 
-**xeokit mock pattern (use this for all Phase 4 tests):**
-```typescript
-jest.mock("@xeokit/xeokit-sdk", () => ({
-  Viewer: jest.fn().mockImplementation(() => ({
-    scene: {
-      setObjectsXRayed: jest.fn(),
-      setObjectsSelected: jest.fn(),
-      setObjectsVisible: jest.fn(),
-      setObjectsHighlighted: jest.fn(),
-      objectIds: ["obj1", "obj2"],
-      objects: { obj1: { id: "obj1" }, obj2: { id: "obj2" } },
-      selectedObjectIds: [],
-      highlightedObjectIds: [],
-      getAABB: jest.fn(() => [0,0,0,10,10,10]),
-      xrayMaterial: { fill: true, fillAlpha: 0.1, fillColor: [0,0,0], edgeAlpha: 0.5, edgeColor: [0,0,0] },
-      highlightMaterial: { fill: true, edges: true, fillAlpha: 0.3, edgeColor: [1,1,0] },
-      models: {},
-      canvas: { canvas: document.createElement("canvas") },
-    },
-    camera: { projection: "perspective", eye: [0,0,10], look: [0,0,0], up: [0,1,0] },
-    cameraFlight: { flyTo: jest.fn(), jumpTo: jest.fn() },
-    cameraControl: { on: jest.fn(), off: jest.fn(), navMode: "orbit" },
-    metaScene: { metaObjects: {} },
-    destroy: jest.fn(),
-  })),
-  SectionPlanesPlugin: jest.fn().mockImplementation(() => ({
-    createSectionPlane: jest.fn(() => ({ id: "sp-1" })),
-    sectionPlanes: {},
-    showControl: jest.fn(),
-    hideControl: jest.fn(),
-    destroySectionPlane: jest.fn(),
-    clear: jest.fn(),
-  })),
-  NavCubePlugin: jest.fn(),
-  GLTFLoaderPlugin: jest.fn().mockImplementation(() => ({
-    load: jest.fn(() => ({ on: jest.fn(), id: "model-1" })),
-  })),
-  TreeViewPlugin: jest.fn().mockImplementation(() => ({
-    on: jest.fn(),
-    destroy: jest.fn(),
-  })),
-  DistanceMeasurementsPlugin: jest.fn().mockImplementation(() => ({
-    createMeasurement: jest.fn(),
-    on: jest.fn(),
-    clear: jest.fn(),
-    destroy: jest.fn(),
-  })),
-  DistanceMeasurementsMouseControl: jest.fn().mockImplementation(() => ({
-    activate: jest.fn(),
-    deactivate: jest.fn(),
-    destroy: jest.fn(),
-    snapping: false,
-  })),
-  PointerLens: jest.fn().mockImplementation(() => ({
-    destroy: jest.fn(),
-  })),
-  AnnotationsPlugin: jest.fn().mockImplementation(() => ({
-    createAnnotation: jest.fn(),
-    annotations: {},
-    on: jest.fn(),
-    clear: jest.fn(),
-    destroy: jest.fn(),
-  })),
-}));
-```
+> **Status:** All 8 tasks (5.1–5.8) implemented and validated. See `docs/reports/validation-report-phase5.md` (Grade B+, 82%).
+> 389 unit tests, 89.94% stmt coverage. Git tag v1.0.0 created.
+>
+> **Key modules added:**
+> - `StoreyNavigator.ts` (336 lines, 24 tests) — Floor/storey-aware 2D plan navigation
+> - `ChainStationingTool.ts` (435 lines, 26 tests) — Alignment-aware stationing
+> - `BCFService.ts` (482 lines, 15 tests) — BCF 2.1 zip export/import
+> - `UtilitiesPanel.ts` (409 lines, 33 tests) — Pipe metadata + underground context
+> - `CollaborationClient.ts` (407 lines, 26 tests) + `server/index.ts` (324 lines) — Remote annotation sync
+> - `I18nService.ts` (145 lines, 24 tests) — i18n EN/VI/FR (not yet integrated into UI)
+> - `PerformanceOptimizer.ts` (513 lines, 31 tests) — Caching, LOD, lazy loading
+>
+> **Known gaps:** i18n not wired into UI modules, no E2E for Phase 5 features.
 
-**After adding all unit tests, raise `jest.config.js` thresholds:**
-```javascript
-coverageThreshold: {
-  global: {
-    branches: 70,
-    functions: 70,
-    lines: 80,
-    statements: 80,
-  },
-},
-```
+---
 
-#### Task 4.2 — E2E Tests
+### PHASE 6: V2 Features — ✅ COMPLETE
 
-Extend `tests/e2e/viewer.spec.ts`:
-- Test model loading (need sample model in `data/`)
-- Test object selection (click canvas → properties panel updates)
-- Test measurement tool activation
-- Test section plane creation
-- Test search filtering
-- Cross-browser (already configured in playwright.config.ts)
+> **Status:** All 6 tasks (6.1–6.6) implemented and validated. See `docs/reports/validation-report-phase6.md` (Grade B+, 88%).
+> 626 unit tests (237 new), 87.09% stmt coverage. 6 commits (c54616a → b3f6978).
+>
+> **Key modules added:**
+> - `VisionProUI.ts` (516 lines, 32 tests) — Headset detection, HUD, radial menu, gaze/pinch
+> - `WebXRSession.ts` (437 lines, 26 tests) — WebXR session management (PROTOTYPE)
+> - `RealtimeSync.ts` (541 lines, 48 tests) — WebSocket sync, presence, roles, offline queue
+> - `PluginAPI.ts` (152 lines) + `PluginLoader.ts` (324 lines, 43 tests) — Plugin system with sandbox
+> - `OfflineStorage.ts` (342 lines) + `ServiceWorkerManager.ts` (256 lines, 39 tests) — Offline support
+> - `UploadEndpoint.ts` (136 lines) + `ConversionQueue.ts` (295 lines) + `ModelStorage.ts` (109 lines, 49 tests) + `Dockerfile` — Server pipeline
+> - `plugins/sample-iot/` — IoT sensor overlay demo plugin
+>
+> **Known gaps:** Coverage regression (87.09% < 90% threshold), no E2E for Phase 6, Docker placeholder,
+> no server-side WS handler, no actual sw.js service worker file.
+
+---
+
+### PHASE 7: Production Infrastructure (Start Here)
+
+> **Current state entering Phase 7:**
+> - 626 unit tests across 23 suites, all passing
+> - Coverage: 87.09% stmts / 69.21% branches / 88.98% lines (BELOW thresholds — fix first or in parallel)
+> - 57 E2E tests (Chromium, unchanged from Phase 4)
+> - Build: 1,300 kB JS + 13.6 kB CSS
+> - 0 npm audit vulnerabilities
+> - All Phases 1-6 committed and validated
+>
+> **Recommended pre-Phase 7 fix:** Resolve coverage regression before adding new modules.
+> Options: (a) add more tests to VisionProUI/WebXRSession/ServiceWorkerManager,
+> (b) add per-file coverage overrides in jest.config.js for XR modules,
+> (c) lower global thresholds slightly (87→85 stmts, 69→65 branches).
+
+#### Task 7.1 — Security Hardening
+
+- CSP headers (Content-Security-Policy meta tag or server headers)
+- HTTPS enforcement (redirect HTTP → HTTPS)
+- Rate limiting for server endpoints (express-rate-limit)
+- IFC upload validation hardening (already partially done in Phase 6.6)
+- Dependency audit automation (Dependabot + npm audit in CI)
+
+#### Task 7.2 — Error Handling & Monitoring
+
+- Client-side error boundaries (try/catch at module boundaries, user-facing error UI)
+- Structured logging (console in dev, optional Sentry integration for production)
+- Server-side health checks (`/health` endpoint)
+- WebSocket connection health monitoring
+
+#### Task 7.3 — Release Engineering
+
+- Semantic versioning enforcement
+- CHANGELOG automation (standard-version or similar)
+- GitHub Release workflow with build artifacts
+- Docker image publishing for server-assisted mode
+- Preview deployments for PRs
+
+#### Task 7.4 — Community & Governance
+
+- Architecture diagrams with visual tools
+- Feature guides with screenshots
+- GitHub Project board for issue tracking
+- Issue/PR template refinement
+- Governance doc (maintainers, decision process)
 
 ---
 
@@ -715,7 +725,9 @@ Extend `tests/e2e/viewer.spec.ts`:
 ```javascript
 coverageThreshold: {
   global: {
-    // Phase 4 (current): 90/70/90/90 — actual: 92.47/75.31/95.12/95.03
+    // Phase 4 targets: 90/70/90/90
+    // Phase 6 actual: 87.09/69.21/N.A./88.98 — BELOW THRESHOLDS
+    // Key low-coverage modules: VisionProUI (70.64%), WebXRSession (73.83%), ServiceWorkerManager (67.36%)
     branches: 70,
     functions: 90,
     lines: 90,
@@ -723,7 +735,7 @@ coverageThreshold: {
   },
 },
 ```
-Thresholds raised in Phase 4 (Task 4.1). 210 unit tests, 10 suites. Phase 4 actual: 92.47% stmts / 75.31% branch / 95.12% funcs / 95.03% lines.
+Thresholds raised in Phase 4 (Task 4.1). Phase 6 introduced XR/offline modules that are hard to test in jsdom, causing coverage regression. Consider per-file overrides for XR modules or adding more targeted tests.
 
 ---
 
@@ -826,6 +838,39 @@ if (!gl) {
 | `tests/e2e/viewer.spec.ts` | 4.2 | ✅ DONE — 50 E2E tests (646 lines) |
 | `tests/e2e/accessibility.spec.ts` | 4.3 | ✅ DONE — 7 axe-core tests (104 lines) |
 | `CHANGELOG.md` | 4.5 | ✅ DONE — Keep-a-Changelog format (64 lines) |
+| `src/viewer/StoreyNavigator.ts` | 5.1 | ✅ DONE — Floor/storey-aware 2D plan navigation (336 lines) |
+| `src/tools/ChainStationingTool.ts` | 5.2 | ✅ DONE — Alignment-aware stationing (435 lines) |
+| `src/collaboration/BCFService.ts` | 5.3 | ✅ DONE — BCF 2.1 zip export/import (482 lines) |
+| `src/ui/UtilitiesPanel.ts` | 5.4 | ✅ DONE — Pipe metadata + underground context (409 lines) |
+| `src/collaboration/CollaborationClient.ts` | 5.5 | ✅ DONE — Remote annotation sync (407 lines) |
+| `server/index.ts` | 5.5 | ✅ DONE — Express REST API for annotations (324 lines) |
+| `src/i18n/I18nService.ts` | 5.6 | ✅ DONE — i18n EN/VI/FR translations (145 lines) |
+| `src/viewer/PerformanceOptimizer.ts` | 5.7 | ✅ DONE — Caching, LOD, lazy loading (513 lines) |
+| `tests/unit/StoreyNavigator.test.ts` | 5.1 | ✅ DONE — 24 tests |
+| `tests/unit/ChainStationingTool.test.ts` | 5.2 | ✅ DONE — 26 tests |
+| `tests/unit/BCFService.test.ts` | 5.3 | ✅ DONE — 15 tests |
+| `tests/unit/UtilitiesPanel.test.ts` | 5.4 | ✅ DONE — 33 tests |
+| `tests/unit/CollaborationClient.test.ts` | 5.5 | ✅ DONE — 26 tests |
+| `tests/unit/I18nService.test.ts` | 5.6 | ✅ DONE — 24 tests |
+| `tests/unit/PerformanceOptimizer.test.ts` | 5.7 | ✅ DONE — 31 tests |
+| `src/xr/VisionProUI.ts` | 6.1 | ✅ DONE — Headset detection, HUD, radial menu, gaze/pinch (516 lines) |
+| `src/xr/WebXRSession.ts` | 6.2 | ✅ DONE — WebXR session management, PROTOTYPE (437 lines) |
+| `src/collaboration/RealtimeSync.ts` | 6.3 | ✅ DONE — WebSocket sync, presence, roles (541 lines) |
+| `src/plugins/PluginAPI.ts` | 6.4 | ✅ DONE — Plugin interfaces, manifest, permissions (152 lines) |
+| `src/plugins/PluginLoader.ts` | 6.4 | ✅ DONE — Registration, lifecycle, sandbox (324 lines) |
+| `plugins/sample-iot/` | 6.4 | ✅ DONE — IoT sensor overlay demo plugin |
+| `src/offline/OfflineStorage.ts` | 6.5 | ✅ DONE — IndexedDB wrapper, 3 stores (342 lines) |
+| `src/offline/ServiceWorkerManager.ts` | 6.5 | ✅ DONE — SW registration, background sync (256 lines) |
+| `server/pipeline/UploadEndpoint.ts` | 6.6 | ✅ DONE — IFC upload validation (136 lines) |
+| `server/pipeline/ConversionQueue.ts` | 6.6 | ✅ DONE — Job queue with retry (295 lines) |
+| `server/pipeline/ModelStorage.ts` | 6.6 | ✅ DONE — Storage + CDN config (109 lines) |
+| `docker/Dockerfile` | 6.6 | ✅ DONE — Multi-stage ifcConvert container (50 lines) |
+| `tests/unit/VisionProUI.test.ts` | 6.1 | ✅ DONE — 32 tests (70.64% stmts) |
+| `tests/unit/WebXRSession.test.ts` | 6.2 | ✅ DONE — 26 tests (73.83% stmts) |
+| `tests/unit/RealtimeSync.test.ts` | 6.3 | ✅ DONE — 48 tests |
+| `tests/unit/PluginSystem.test.ts` | 6.4 | ✅ DONE — 43 tests (95.1% stmts) |
+| `tests/unit/OfflineSupport.test.ts` | 6.5 | ✅ DONE — 39 tests |
+| `tests/unit/ServerPipeline.test.ts` | 6.6 | ✅ DONE — 49 tests |
 
 ---
 
@@ -878,21 +923,45 @@ Before marking any task complete, verify:
 - [x] Task 4.4: Docs updated (README, feature-traceability-matrix, rolling-issues-ledger)
 - [x] Task 4.5: v0.1.0 released (CHANGELOG.md)
 
+### Phase 5: V1 Features — ✅ COMPLETE
+- [x] Task 5.1: Floor/storey-aware 2D plan navigation (StoreyNavigator.ts)
+- [x] Task 5.2: Chain/stationing measurement (ChainStationingTool.ts)
+- [x] Task 5.3: BCF 2.1 export/import (BCFService.ts)
+- [x] Task 5.4: Utilities & underground context (UtilitiesPanel.ts)
+- [x] Task 5.5: Markup collaboration / remote sync (CollaborationClient.ts + server/index.ts)
+- [x] Task 5.6: Localization i18n (I18nService.ts) ⚠️ not integrated into UI
+- [x] Task 5.7: Performance hardening (PerformanceOptimizer.ts)
+- [x] Task 5.8: V1 release v1.0.0 tagged
+
+### Phase 6: V2 Features — ✅ COMPLETE
+- [x] Task 6.1: Vision Pro headset-friendly UI (VisionProUI.ts)
+- [x] Task 6.2: WebXR immersive prototype (WebXRSession.ts)
+- [x] Task 6.3: Real-time collaboration (RealtimeSync.ts)
+- [x] Task 6.4: Plugin system (PluginAPI.ts + PluginLoader.ts + sample-iot)
+- [x] Task 6.5: Mobile offline support (OfflineStorage.ts + ServiceWorkerManager.ts)
+- [x] Task 6.6: Server-assisted pipeline (UploadEndpoint + ConversionQueue + ModelStorage + Dockerfile)
+
+### Phase 7: Production Infrastructure
+- [ ] Task 7.1: Security hardening (CSP, HTTPS, rate limiting)
+- [ ] Task 7.2: Error handling & monitoring (error boundaries, logging)
+- [ ] Task 7.3: Release engineering (semver, CHANGELOG automation, Docker)
+- [ ] Task 7.4: Community & governance (docs, project board, outreach)
+
 ---
 
 ## EXECUTION INSTRUCTIONS
 
-**To start implementation, tell Claude:**
+**To start Phase 7 implementation, tell Claude:**
 
-> Execute Phase 1 from `docs/prompts/PROMPT-swe-execution-civil-bim-viewer.md`. Start with Task 1.1 (initialize xeokit Viewer in ViewerCore.ts). Follow the verification checklist after each task. Commit after each task.
+> Execute Phase 7 from `docs/prompts/PROMPT-swe-execution-civil-bim-viewer.md`. Start with Task 7.1 (Security Hardening). All Phases 1-6 are complete and validated.
 
-**To continue to the next phase:**
+**To fix Phase 6 coverage regression first:**
 
-> Execute Phase 2 from the SWE execution prompt. All Phase 1 tasks are complete and verified.
+> Fix the Phase 6 coverage regression. Current: 87.09% stmts (threshold 90%), 69.21% branches (threshold 70%). Key modules to improve: VisionProUI (70.64%), WebXRSession (73.83%), ServiceWorkerManager (67.36%). Add tests or adjust per-file threshold overrides in jest.config.js.
 
 **To execute a single task:**
 
-> Execute Task 2.1 (Distance Measurement Tool) from the SWE execution prompt. Phase 1 is complete.
+> Execute Task 7.1 (Security Hardening) from the SWE execution prompt. Phases 1-6 complete.
 
 ---
 
