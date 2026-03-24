@@ -1,0 +1,16 @@
+{
+  "id": "com.example.iot-sensor-overlay",
+  "name": "IoT Sensor Overlay",
+  "version": "1.0.0",
+  "description": "Displays real-time IoT sensor data (temperature, humidity, vibration) as overlays on BIM model elements.",
+  "author": "Civil BIM Team",
+  "main": "index.ts",
+  "viewerVersion": ">=1.0.0",
+  "permissions": [
+    "ui:panel",
+    "ui:toolbar",
+    "viewer:selection",
+    "viewer:objects",
+    "viewer:camera"
+  ]
+}
