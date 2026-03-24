@@ -61,6 +61,27 @@ npm run build         # Production build
 
 All checks must pass before a PR is merged.
 
+## Architecture & Documentation
+
+- See [docs/architecture.md](docs/architecture.md) for the system architecture with Mermaid diagrams
+- See [docs/feature-guides/](docs/feature-guides/) for per-feature usage guides
+- See [GOVERNANCE.md](GOVERNANCE.md) for maintainer roles and decision processes
+
+When adding new modules, update the architecture doc's Module Map table.
+
+## Release Process
+
+Releases follow [Semantic Versioning](https://semver.org/):
+
+```bash
+npm run release -- patch   # Bug fix release (1.0.0 → 1.0.1)
+npm run release -- minor   # Feature release (1.0.0 → 1.1.0)
+npm run release -- major   # Breaking changes (1.0.0 → 2.0.0)
+npm run release:dry -- patch  # Preview without committing
+```
+
+The release script bumps `package.json`, updates `CHANGELOG.md`, commits, and tags. Pushing the tag triggers the GitHub Release workflow which builds artifacts and publishes a Docker image.
+
 ## Pull Request Process
 
 1. Open an issue first for non-trivial changes to discuss the approach.

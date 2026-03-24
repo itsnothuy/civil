@@ -12,9 +12,11 @@
 - [ ] Tests written and passing (`npm test`, `npm run test:e2e`)
 - [ ] Linting passes (`npm run lint`)
 - [ ] TypeScript checks pass (`npm run typecheck`)
+- [ ] Build succeeds (`npm run build`)
 - [ ] Documentation updated (if applicable)
 - [ ] No new high-severity `npm audit` warnings
 - [ ] Acceptance criteria from the linked issue are met
+- [ ] CLA signed (required for all contributions)
 
 ## Screenshots / recordings (if UI change)
 <!-- Attach screenshots or a short screen recording. For Vision Pro changes, include Simulator screenshots. -->
