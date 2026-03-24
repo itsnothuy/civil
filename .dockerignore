@@ -1,0 +1,34 @@
+# Build artifacts
+dist/
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+tests/
+test-results/
+playwright-report/
+coverage/
+jest.config.js
+playwright.config.ts
+tsconfig.test.json
+
+# Docs
+docs/
+*.md
+!README.md
+
+# CI
+.github/
+
+# Dev configs
+.eslintrc.json
+.prettierrc.json
+.prettierignore
+.eslintignore
