@@ -26,6 +26,11 @@ import express from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import crypto from "node:crypto";
+import {
+  securityHeaders,
+  httpsRedirect,
+  AUTH_RATE_LIMIT_CONFIG,
+} from "./middleware/SecurityMiddleware";
 
 const app = express();
 const PORT = parseInt(process.env.PORT ?? "4000", 10);
@@ -33,6 +38,15 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:3000";
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID ?? "";
 const GITHUB_SECRET = process.env.GITHUB_SECRET ?? "";
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
+
+// ── Security (Phase 7, Task 7.1) ──────────────────────────
+
+// HTTPS redirect in production (behind reverse proxy)
+app.set("trust proxy", 1);
+app.use(httpsRedirect());
+
+// Security headers: CSP, HSTS, X-Frame-Options, etc.
+app.use(securityHeaders({ corsOrigin: CORS_ORIGIN }));
 
 // ── Middleware ─────────────────────────────────────────────
 
@@ -48,6 +62,9 @@ const limiter = rateLimit({
   message: { error: "Too many requests, please try again later." },
 });
 app.use(limiter);
+
+// Stricter rate limit for auth endpoints
+const authLimiter = rateLimit(AUTH_RATE_LIMIT_CONFIG);
 
 // ── In-Memory Storage (replace with DB in production) ──────
 
@@ -125,7 +142,7 @@ function sanitizeString(value: unknown): string {
 // ── Routes: Auth ──────────────────────────────────────────
 
 /** GitHub OAuth callback — exchange code for token */
-app.post("/api/auth/github", async (req, res) => {
+app.post("/api/auth/github", authLimiter, async (req, res) => {
   const { code } = req.body as { code?: string };
   if (!code || typeof code !== "string") {
     res.status(400).json({ error: "Missing authorization code" });
@@ -305,10 +322,24 @@ app.get("/api/projects/:projectId/viewpoints/:vpId", (req, res) => {
   res.json(vp);
 });
 
-// ── Health Check ──────────────────────────────────────────
+// ── Health Check (enhanced Phase 7) ──────────────────────
 
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version ?? "2.0.0",
+    uptime: Math.floor(process.uptime()),
+    memory: {
+      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+    },
+    stores: {
+      projects: annotationsStore.size,
+      sessions: sessions.size,
+      viewpoints: viewpointsStore.size,
+    },
+  });
 });
 
 // ── Start Server ──────────────────────────────────────────

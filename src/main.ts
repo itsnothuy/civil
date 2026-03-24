@@ -21,10 +21,15 @@ import { UtilitiesPanel } from "./ui/UtilitiesPanel";
 import { BCFService } from "./tools/BCFService";
 import { CollaborationClient } from "./collaboration/CollaborationClient";
 import { PerformanceOptimizer } from "./viewer/PerformanceOptimizer";
+import { initClientSecurity } from "./security/SecurityHeaders";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
   const projectId = params.get("projectId") ?? "sample";
+
+  // --- Client-side security (Phase 7, Task 7.1) ---
+  const apiUrl = params.get("apiUrl") ?? "http://localhost:4000/api";
+  initClientSecurity(new URL(apiUrl).origin);
 
   // --- Viewer Core (xeokit) ---
   const viewer = new ViewerCore("viewer-canvas");
