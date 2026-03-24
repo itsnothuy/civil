@@ -10,9 +10,7 @@ if (typeof globalThis.structuredClone === "undefined") {
 
 import "fake-indexeddb/auto";
 import { OfflineStorage, type PendingSyncItem } from "../../src/offline/OfflineStorage";
-import {
-  ServiceWorkerManager,
-} from "../../src/offline/ServiceWorkerManager";
+import { ServiceWorkerManager } from "../../src/offline/ServiceWorkerManager";
 
 // ── OfflineStorage tests ───────────────────────────────────
 
