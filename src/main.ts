@@ -22,6 +22,8 @@ import { BCFService } from "./tools/BCFService";
 import { CollaborationClient } from "./collaboration/CollaborationClient";
 import { PerformanceOptimizer } from "./viewer/PerformanceOptimizer";
 import { initClientSecurity } from "./security/SecurityHeaders";
+import { Logger } from "./monitoring/Logger";
+import { ErrorBoundary } from "./monitoring/ErrorBoundary";
 
 async function init(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
@@ -30,6 +32,15 @@ async function init(): Promise<void> {
   // --- Client-side security (Phase 7, Task 7.1) ---
   const apiUrl = params.get("apiUrl") ?? "http://localhost:4000/api";
   initClientSecurity(new URL(apiUrl).origin);
+
+  // --- Structured logging & error boundary (Phase 7, Task 7.2) ---
+  const logger = Logger.getInstance({ minLevel: "info" });
+  const errorBoundary = new ErrorBoundary({
+    containerId: "app",
+    showOverlay: true,
+  });
+  errorBoundary.install();
+  logger.info("App", "Civil BIM Viewer initializing", { projectId });
 
   // --- Viewer Core (xeokit) ---
   const viewer = new ViewerCore("viewer-canvas");
